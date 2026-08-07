@@ -37,24 +37,40 @@ function dedupExcluding(candidates: number[], exclude: number): number[] {
 
 // Fills up to `needed` distinct wrong-answer values around `correct`, avoiding
 // anything already in `avoid`. Used to top off whatever the confusable pool
-// (plausible-mistake candidates) didn't cover.
-function genericDistractors(correct: number, spread: number, needed: number, avoid: Set<number>): number[] {
+// (plausible-mistake candidates) didn't cover. `avoidUnitsDigit`, quando
+// passado, impede que o preenchimento genérico bata por acaso o mesmo
+// algarismo da unidade — sem isso, o Desafiador às vezes tinha 3 alternativas
+// com a mesma unidade em vez de exatamente 2, por coincidência aleatória.
+function genericDistractors(
+  correct: number,
+  spread: number,
+  needed: number,
+  avoid: Set<number>,
+  avoidUnitsDigit: number | null = null
+): number[] {
   const found = new Set<number>()
   let attempts = 0
+  const forbiddenDigit = avoidUnitsDigit !== null ? Math.abs(avoidUnitsDigit % 10) : null
+
+  function isAllowed(candidate: number): boolean {
+    if (avoid.has(candidate)) return false
+    if (forbiddenDigit !== null && Math.abs(candidate % 10) === forbiddenDigit) return false
+    return true
+  }
 
   while (found.size < needed && attempts < 200) {
     attempts++
     const offset = randIntExcluding(-spread, spread, [0])
     const candidate = correct + offset
-    if (!avoid.has(candidate)) found.add(candidate)
+    if (isAllowed(candidate)) found.add(candidate)
   }
 
   let step = 1
-  while (found.size < needed && step < 100) {
+  while (found.size < needed && step < 200) {
     for (const sign of [1, -1]) {
       if (found.size >= needed) break
       const candidate = correct + sign * step
-      if (!avoid.has(candidate)) found.add(candidate)
+      if (isAllowed(candidate)) found.add(candidate)
     }
     step++
   }
@@ -105,25 +121,33 @@ function pickOptions(
   const wrong: number[] = []
   const avoid = new Set<number>([correct])
 
-  // Só no Expert (confusableCount === 3): as 3 opções erradas terminam no
-  // mesmo algarismo da unidade da certa — nenhum atalho de "olhar o último
-  // dígito" sobra. Prioriza candidatos de erro plausível que já batem por
-  // coincidência; só completa com ±10k mecânico quando falta.
-  if (confusableCount >= 3) {
+  // Desafiador: 1 opção errada com a mesma unidade da certa (2 das 4 no total).
+  // Expert: as 3 opções erradas com a mesma unidade (4 das 4) — nenhum atalho
+  // de "olhar o último dígito" sobra. Nos dois casos, prioriza candidatos de
+  // erro plausível que já batem essa unidade por coincidência; só completa
+  // com ±10k mecânico quando falta.
+  const sameUnitsCount = confusableCount >= 3 ? 3 : confusableCount >= 2 ? 1 : 0
+  if (sameUnitsCount > 0) {
     const matching = dedupExcluding(confusable, correct).filter(
       (c) => Math.abs(c % 10) === Math.abs(correct % 10) && !avoid.has(c)
     )
     for (const c of matching) {
-      if (wrong.length >= 3) break
+      if (wrong.length >= sameUnitsCount) break
       wrong.push(c)
       avoid.add(c)
     }
-    if (wrong.length < 3) {
-      wrong.push(...sameUnitsDigitDistractors(correct, avoid, 3 - wrong.length, allowNegativeDistractors))
+    if (wrong.length < sameUnitsCount) {
+      wrong.push(...sameUnitsDigitDistractors(correct, avoid, sameUnitsCount - wrong.length, allowNegativeDistractors))
     }
   }
 
-  const deduped = dedupExcluding(confusable, correct).filter((c) => !avoid.has(c))
+  // No Desafiador (sameUnitsCount === 1), trava o restante do preenchimento pra
+  // não bater a mesma unidade por acaso — garante EXATAMENTE 2 das 4 (não 3).
+  // No Expert essa trava nunca entra em ação (wrong já está cheio nesse ponto).
+  const capSameUnits = sameUnitsCount > 0 && sameUnitsCount < 3
+  const deduped = dedupExcluding(confusable, correct).filter(
+    (c) => !avoid.has(c) && (!capSameUnits || Math.abs(c % 10) !== Math.abs(correct % 10))
+  )
   for (const c of deduped) {
     if (wrong.length >= confusableCount) break
     wrong.push(c)
@@ -131,7 +155,7 @@ function pickOptions(
   }
 
   const remaining = 3 - wrong.length
-  const generic = remaining > 0 ? genericDistractors(correct, spread, remaining, avoid) : []
+  const generic = remaining > 0 ? genericDistractors(correct, spread, remaining, avoid, capSameUnits ? correct : null) : []
   return shuffleArray([correct, ...wrong, ...generic])
 }
 

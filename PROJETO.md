@@ -105,7 +105,15 @@ Faixas numéricas maiores por si só não garantem mais dificuldade em um jogo d
 
 No Expert, as 3 alternativas erradas são sempre erros plausíveis — exige cálculo/memória real, não estimativa. Em Números Inteiros, o erro mais comum (inverter o sinal) é sempre priorizado como uma das alternativas. Implementado em `pickOptions()` / `getConfusableCount()` no `gameEngine.ts`.
 
-**Mesmo algarismo da unidade — só no Expert (adicionado em 07/08/2026, ajustado no mesmo dia):** no Expert, as 4 alternativas (a certa + as 3 erradas) sempre terminam no mesmo algarismo da unidade (ex: certa `17`, erradas `37`, `27`, `7` — todas terminam em 7). Sem isso dava pra eliminar alternativas só olhando o último dígito, sem calcular nada. Prioriza candidatos de "erro plausível" que já batem essa unidade por coincidência; só completa com `correto ± múltiplo de 10` quando falta. Em modos não-inteiros (`basic-*`, Tabuada), nunca deixa esse `±10k` cair em número negativo — troca de direção quando um lado ficaria negativo, garantindo sempre 3 distratores positivos distintos. Implementado em `sameUnitsDigitDistractors()`, chamado dentro do próprio `pickOptions()` quando `confusableCount >= 3`. No Iniciante e no Desafiador não entra — lá o objetivo ainda é deixar eliminar por estimativa/cálculo parcial.
+**Mesmo algarismo da unidade — Desafiador e Expert (adicionado em 07/08/2026, ajustado no mesmo dia):**
+
+| Nível | Alternativas com a mesma unidade | Exemplo |
+|---|---|---|
+| Iniciante | nenhuma exigência | — |
+| Desafiador | exatamente 2 das 4 (a certa + 1 forçada) | certa `486`, forçada `496` |
+| Expert | as 4 (a certa + as 3 erradas) | certa `17`, erradas `37`, `27`, `7` |
+
+Sem isso dava pra eliminar alternativas só olhando o último dígito, sem calcular nada. Prioriza candidatos de "erro plausível" que já batem essa unidade por coincidência; só completa com `correto ± múltiplo de 10` quando falta. No Desafiador, o resto do preenchimento (pool de erro plausível + genérico) é impedido de bater essa unidade por acidente — garante exatamente 2, nunca 3 por coincidência. Em modos não-inteiros (`basic-*`, Tabuada), nunca deixa esse `±10k` cair em número negativo — troca de direção quando um lado ficaria negativo. Implementado em `sameUnitsDigitDistractors()` + `genericDistractors(..., avoidUnitsDigit)`, dentro do próprio `pickOptions()`.
 
 ### Regras do jogo
 
