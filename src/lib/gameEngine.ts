@@ -63,16 +63,28 @@ function genericDistractors(correct: number, spread: number, needed: number, avo
 }
 
 // correct + múltiplo de 10 sempre termina no mesmo algarismo da unidade —
-// garante uma alternativa errada que não dá pra descartar só olhando o
-// último dígito da resposta certa.
-function sameUnitsDigitDistractor(correct: number, avoid: Set<number>): number | null {
-  for (let k = 1; k <= 20; k++) {
+// garante `count` alternativas erradas distintas que não dá pra descartar só
+// olhando o último dígito da resposta certa. `allowNegative` evita distratores
+// negativos em modos que só trabalham com resultados positivos.
+function sameUnitsDigitDistractors(
+  correct: number,
+  avoid: Set<number>,
+  count: number,
+  allowNegative: boolean
+): number[] {
+  const found: number[] = []
+  for (let k = 1; k <= 40 && found.length < count; k++) {
     for (const sign of [1, -1]) {
+      if (found.length >= count) break
       const candidate = correct + sign * k * 10
-      if (candidate !== correct && !avoid.has(candidate)) return candidate
+      if (candidate === correct) continue
+      if (!allowNegative && candidate < 0) continue
+      if (avoid.has(candidate)) continue
+      found.push(candidate)
+      avoid.add(candidate)
     }
   }
-  return null
+  return found
 }
 
 // Builds the 4 multiple-choice options for a question. `confusable` is a list
@@ -81,17 +93,33 @@ function sameUnitsDigitDistractor(correct: number, avoid: Set<number>): number |
 // (from getConfusableCount) decides how many of the 3 wrong answers come from
 // that list versus a generic nearby-number fallback — this is what makes
 // higher difficulty levels actually harder to eliminate by guesswork.
-function pickOptions(correct: number, confusable: number[], spread: number, confusableCount: number): number[] {
+// `allowNegativeDistractors` should be false for modes whose results are
+// always non-negative (basic-*, tabuada) — só os modos de Inteiros usam true.
+function pickOptions(
+  correct: number,
+  confusable: number[],
+  spread: number,
+  confusableCount: number,
+  allowNegativeDistractors: boolean
+): number[] {
   const wrong: number[] = []
   const avoid = new Set<number>([correct])
 
-  // A partir do Desafiador (confusableCount >= 2), reserva uma das opções
-  // erradas pra terminar no mesmo algarismo da unidade da resposta certa.
-  if (confusableCount >= 2) {
-    const sameUnits = sameUnitsDigitDistractor(correct, avoid)
-    if (sameUnits !== null) {
-      wrong.push(sameUnits)
-      avoid.add(sameUnits)
+  // Só no Expert (confusableCount === 3): as 3 opções erradas terminam no
+  // mesmo algarismo da unidade da certa — nenhum atalho de "olhar o último
+  // dígito" sobra. Prioriza candidatos de erro plausível que já batem por
+  // coincidência; só completa com ±10k mecânico quando falta.
+  if (confusableCount >= 3) {
+    const matching = dedupExcluding(confusable, correct).filter(
+      (c) => Math.abs(c % 10) === Math.abs(correct % 10) && !avoid.has(c)
+    )
+    for (const c of matching) {
+      if (wrong.length >= 3) break
+      wrong.push(c)
+      avoid.add(c)
+    }
+    if (wrong.length < 3) {
+      wrong.push(...sameUnitsDigitDistractors(correct, avoid, 3 - wrong.length, allowNegativeDistractors))
     }
   }
 
@@ -224,7 +252,7 @@ function generateQuestion(mode: GameMode, level: DifficultyLevel): Question {
       return {
         text: `${a} + ${b} = ?`,
         correct,
-        options: pickOptions(correct, buildAddConfusable(a, b, correct), getSpread(level, correct), confusableCount),
+        options: pickOptions(correct, buildAddConfusable(a, b, correct), getSpread(level, correct), confusableCount, false),
         explanation: `Some ${a} com ${b}: ${a} + ${b} = ${correct}.`,
       }
     }
@@ -236,7 +264,7 @@ function generateQuestion(mode: GameMode, level: DifficultyLevel): Question {
       return {
         text: `${a} − ${b} = ?`,
         correct,
-        options: pickOptions(correct, buildSubConfusable(a, b, correct), getSpread(level, correct), confusableCount),
+        options: pickOptions(correct, buildSubConfusable(a, b, correct), getSpread(level, correct), confusableCount, false),
         explanation: `Retire ${b} de ${a}: ${a} − ${b} = ${correct}.`,
       }
     }
@@ -248,7 +276,7 @@ function generateQuestion(mode: GameMode, level: DifficultyLevel): Question {
       return {
         text: `${a} × ${b} = ?`,
         correct,
-        options: pickOptions(correct, buildMulConfusable(a, b, correct), getSpread(level, correct), confusableCount),
+        options: pickOptions(correct, buildMulConfusable(a, b, correct), getSpread(level, correct), confusableCount, false),
         explanation: `${a} grupos de ${b}: ${a} × ${b} = ${correct}. Lembre: ${b} × ${a} também vale ${correct}.`,
       }
     }
@@ -260,7 +288,7 @@ function generateQuestion(mode: GameMode, level: DifficultyLevel): Question {
       return {
         text: `${dividendo} ÷ ${divisor} = ?`,
         correct: quociente,
-        options: pickOptions(quociente, buildDivConfusable(quociente), getSpread(level, quociente), confusableCount),
+        options: pickOptions(quociente, buildDivConfusable(quociente), getSpread(level, quociente), confusableCount, false),
         explanation: `${divisor} × ${quociente} = ${dividendo}, então ${dividendo} ÷ ${divisor} = ${quociente}.`,
       }
     }
@@ -272,7 +300,7 @@ function generateQuestion(mode: GameMode, level: DifficultyLevel): Question {
       return {
         text: `${a} × ${b} = ?`,
         correct,
-        options: pickOptions(correct, buildMulConfusable(a, b, correct), getSpread(level, correct), confusableCount),
+        options: pickOptions(correct, buildMulConfusable(a, b, correct), getSpread(level, correct), confusableCount, false),
         explanation: `Tabuada do ${a}: ${a} × ${b} = ${correct}. Grave este resultado!`,
       }
     }
@@ -288,7 +316,8 @@ function generateQuestion(mode: GameMode, level: DifficultyLevel): Question {
           correct,
           withSignFlip(correct, buildAddConfusable(a, b, correct)),
           getSpread(level, Math.abs(correct) + 3),
-          confusableCount
+          confusableCount,
+          true
         ),
         explanation: explainIntAdd(a, b, correct),
       }
@@ -306,7 +335,8 @@ function generateQuestion(mode: GameMode, level: DifficultyLevel): Question {
           correct,
           withSignFlip(correct, buildSubConfusable(a, b, correct)),
           getSpread(level, Math.abs(correct) + 3),
-          confusableCount
+          confusableCount,
+          true
         ),
         explanation: `Subtrair ${formatNumber(b)} é somar ${formatNumber(negB)}: ${formatNumber(a)} + ${formatNumber(negB)} = ${correct}.`,
       }
@@ -323,7 +353,8 @@ function generateQuestion(mode: GameMode, level: DifficultyLevel): Question {
           correct,
           withSignFlip(correct, buildMulConfusable(a, b, correct)),
           getSpread(level, Math.abs(correct) + 5),
-          confusableCount
+          confusableCount,
+          true
         ),
         explanation: explainIntMul(a, b, correct),
       }
@@ -342,7 +373,8 @@ function generateQuestion(mode: GameMode, level: DifficultyLevel): Question {
           quociente,
           withSignFlip(quociente, buildDivConfusable(quociente)),
           getSpread(level, Math.abs(quociente) + 3),
-          confusableCount
+          confusableCount,
+          true
         ),
         explanation: `${signRule} ${formatNumber(divisor)} × ${quociente} = ${dividendo}, então o resultado é ${quociente}.`,
       }
@@ -373,7 +405,7 @@ function generateFocusedTabuadaQuestion(n: number, level: DifficultyLevel, famil
       return {
         text: flip ? `${b} + ${n} = ?` : `${n} + ${b} = ?`,
         correct: sum,
-        options: pickOptions(sum, buildAddConfusable(n, b, sum), getSpread(level, sum), confusableCount),
+        options: pickOptions(sum, buildAddConfusable(n, b, sum), getSpread(level, sum), confusableCount, false),
         explanation: `Isso vem da tabuada do ${n}: ${n} × ${b} = ${product}. Aqui é a soma relacionada: ${n} + ${b} = ${sum}.`,
       }
     }
@@ -384,7 +416,7 @@ function generateFocusedTabuadaQuestion(n: number, level: DifficultyLevel, famil
       return {
         text: `${sum} − ${subtracted} = ?`,
         correct,
-        options: pickOptions(correct, buildSubConfusable(sum, subtracted, correct), getSpread(level, correct), confusableCount),
+        options: pickOptions(correct, buildSubConfusable(sum, subtracted, correct), getSpread(level, correct), confusableCount, false),
         explanation: `Isso vem da tabuada do ${n}: ${n} × ${b} = ${product}. Aqui é a subtração relacionada: ${sum} − ${subtracted} = ${correct}.`,
       }
     }
@@ -393,7 +425,7 @@ function generateFocusedTabuadaQuestion(n: number, level: DifficultyLevel, famil
       return {
         text: flip ? `${b} × ${n} = ?` : `${n} × ${b} = ?`,
         correct: product,
-        options: pickOptions(product, buildMulConfusable(n, b, product), getSpread(level, product), confusableCount),
+        options: pickOptions(product, buildMulConfusable(n, b, product), getSpread(level, product), confusableCount, false),
         explanation: `Tabuada do ${n}: ${n} × ${b} = ${product}. Grave este resultado!`,
       }
     }
@@ -404,7 +436,7 @@ function generateFocusedTabuadaQuestion(n: number, level: DifficultyLevel, famil
       return {
         text: `${product} ÷ ${divisor} = ?`,
         correct,
-        options: pickOptions(correct, buildDivConfusable(correct), getSpread(level, correct), confusableCount),
+        options: pickOptions(correct, buildDivConfusable(correct), getSpread(level, correct), confusableCount, false),
         explanation: `Isso vem da tabuada do ${n}: ${n} × ${b} = ${product}, então ${product} ÷ ${divisor} = ${correct}.`,
       }
     }
