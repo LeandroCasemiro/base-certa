@@ -218,7 +218,7 @@ Salva e lê histórico no LocalStorage. Chave composta `modo__nível` (ou `modo_
 ## 6. Deploy
 
 ### Repositório
-- GitHub: `https://github.com/casemiroya/base-certa`
+- GitHub: `https://github.com/LeandroCasemiro/base-certa`
 - Branch principal: `main`
 
 ### Hospedagem
@@ -234,7 +234,9 @@ git commit -m "descrição do que foi alterado"
 git push
 ```
 
-> A pasta mudou em 07/08/2026 (de `CLAUDE CODE/IMERSAO COM TATA/base-certa` para `APPS/base-certa`) — o repo Git e o link da Vercel não são afetados pela mudança de pasta local.
+> A pasta mudou em 07/08/2026 (de `CLAUDE CODE/IMERSAO COM TATA/base-certa` para `APPS/base-certa`) — sem efeito no repo Git nem na Vercel.
+>
+> Em 07/08/2026 o repositório também migrou de `casemiroya/base-certa` para `LeandroCasemiro/base-certa` (a conta antiga não tinha permissão de push) e o projeto na Vercel foi reconectado ao repositório novo via `vercel git connect`. Este parágrafo foi adicionado por um push de teste pra confirmar que o deploy automático continua funcionando após a migração.
 
 A Vercel detecta o push e faz o novo deploy automaticamente em ~1 minuto.
 
