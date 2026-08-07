@@ -77,11 +77,21 @@ O placar de melhor pontuação é isolado por variante (ex: "Tabuada do 7 · Fam
 | Subtração | até 15, positivo | até 30, positivo | até 100, positivo |
 | Multiplicação | 2–5 × 2–5 | 2–12 × 2–9 | 2–15 × 2–12 |
 | Divisão | quoc. 1–5, div. 2–5 | quoc. 1–10, div. 2–10 | quoc. 1–20, div. 2–12 |
-| Tabuada | 1–5 × 1–5 | 1–10 × 1–10 | 1–12 × 1–12 |
+| Tabuada | número × 1–10 | número × 11–100 | número × 101–999 |
 | Inteiros (+/−) | −5 a 5 | −10 a 10 | −20 a 20 |
 | Inteiros (×/÷) | −5 a 5 (excl. 0) | −10 a 10 (excl. 0) | −20 a 20 (excl. 0) |
 
 > Correção 07/08/2026: esta tabela dizia ±15 no Expert de Inteiros ×/÷, mas o código sempre usou a mesma `getIntRange()` dos outros 3 modos de inteiros (±20). A tabela estava desatualizada, não o código — nenhuma faixa numérica mudou nesta revisão.
+
+### Tabuada — o nível escala o multiplicador, não o produto (corrigido em 07/08/2026)
+
+Uma primeira versão desta correção tentou definir o nível pelo tamanho do **produto** (resultado ≤10 / ≤100 / >100). Isso quebra pra qualquer tabuada pequena escolhida — a tabuada do 6, por exemplo, nunca passa de 6×12=72, então nunca teria Expert. A versão correta escala o **segundo fator** ("o número escolhido vezes X"), não o produto:
+
+- **Iniciante:** número escolhido × 1 a 10 (a tabuada clássica: `6 × 1` até `6 × 10`)
+- **Desafiador:** número escolhido × 11 a 100 (ex: `6 × 67`)
+- **Expert:** número escolhido × 101 a 999 (ex: `6 × 128`) — o teto de 999 foi uma escolha (não veio de pedido explícito), pra manter 3 dígitos em vez de números arbitrariamente grandes
+
+Vale tanto pra "Todas as tabuadas" (o primeiro fator sorteia 1–12, representando qual tabuada) quanto pra tabuada de número específico (o primeiro fator é o número escolhido pelo aluno). Implementado em `getTabuadaRange()` no `gameEngine.ts`.
 
 ### Por que os níveis mais altos são mais difíceis (revisado em 07/08/2026)
 
@@ -271,3 +281,4 @@ A Vercel detecta o push e faz o novo deploy automaticamente em ~1 minuto.
 
 *Documento gerado em 22/03/2026 — Base Certa v1.0*
 *Atualizado em 07/08/2026 — v1.1: seleção de tabuada específica, família de operações (+, −, ×, ÷) focada em um número, e alternativas erradas com dificuldade progressiva por nível*
+*Atualizado em 07/08/2026 — v1.2: corrige o critério de nível da Tabuada — escala o multiplicador (1–10 / 11–100 / 101–999), não o produto, pra funcionar em qualquer tabuada escolhida*

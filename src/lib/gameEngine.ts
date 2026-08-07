@@ -140,10 +140,16 @@ function getBasicDivRange(level: DifficultyLevel): { q: Range; d: Range } {
   return { q: { min: 1, max: 20 }, d: { min: 2, max: 12 } }
 }
 
-function getTabuadaRange(level: DifficultyLevel): number {
-  if (level === 'beginner') return 5
-  if (level === 'intermediate') return 10
-  return 12
+// O nível escala o MULTIPLICADOR (o "vezes X"), não o produto — pra qualquer
+// tabuada escolhida (mesmo uma pequena, tipo a do 6) ter um Expert de verdade:
+// Iniciante 1–10 (tabuada clássica), Desafiador 11–100, Expert 101–999
+// (ex: 6×11, 6×138 — vai além do que normalmente se decora de cor).
+const TABUADA_CHOSEN_NUMBER_MAX = 12 // "qual tabuada" — sempre 1 a 12, não escala por nível
+
+function getTabuadaRange(level: DifficultyLevel): Range {
+  if (level === 'beginner') return { min: 1, max: 10 }
+  if (level === 'intermediate') return { min: 11, max: 100 }
+  return { min: 101, max: 999 }
 }
 
 function getIntRange(level: DifficultyLevel): number {
@@ -229,9 +235,9 @@ function generateQuestion(mode: GameMode, level: DifficultyLevel): Question {
       }
     }
     case 'tabuada': {
-      const max = getTabuadaRange(level)
-      const a = randInt(1, max)
-      const b = randInt(1, max)
+      const a = randInt(1, TABUADA_CHOSEN_NUMBER_MAX)
+      const r = getTabuadaRange(level)
+      const b = randInt(r.min, r.max)
       const correct = a * b
       return {
         text: `${a} × ${b} = ?`,
@@ -322,8 +328,8 @@ type FocusOp = 'add' | 'sub' | 'mul' | 'div'
 // 4 operations when `family` is on. Every explanation ties back to the
 // multiplication fact so the connection between operations is explicit.
 function generateFocusedTabuadaQuestion(n: number, level: DifficultyLevel, family: boolean): Question {
-  const maxPartner = getTabuadaRange(level)
-  const b = randInt(1, maxPartner)
+  const partnerRange = getTabuadaRange(level)
+  const b = randInt(partnerRange.min, partnerRange.max)
   const confusableCount = getConfusableCount(level)
   const product = n * b
   const sum = n + b
