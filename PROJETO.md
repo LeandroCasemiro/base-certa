@@ -50,6 +50,17 @@ Foram considerados: Tabuada Game, Conta Rápida, MatQuiz, Conta Comigo, Tabuada 
 | 8 | Multiplicação com Inteiros | Números Inteiros |
 | 9 | Divisão com Inteiros | Números Inteiros |
 
+### Tabuada — sub-fluxo de configuração (adicionado em 07/08/2026)
+
+Ao escolher "Tabuada" na Home, o aluno passa por uma tela extra (`TabuadaSetupScreen`) antes da tela de nível:
+
+1. **Qual tabuada?** — "Todas as tabuadas" (padrão, comportamento original: `a × b` aleatórios dentro da faixa do nível) ou um número específico de 1 a 12.
+2. **Como treinar** (só aparece se escolheu um número específico `N`):
+   - **Só multiplicação** — igual à tabuada tradicional, travada no número `N` (`N × b` ou `b × N`).
+   - **Família completa (+, −, × e ÷)** — sorteia um parceiro `b` (mesma faixa por nível da tabuada) e monta a "família de fatos" de `N` e `b`: soma, subtração, multiplicação e divisão, todas envolvendo `N`. A explicação de toda questão amarra de volta à multiplicação (`"Isso vem da tabuada do N: N × b = produto."`), mesmo nas perguntas de soma/subtração/divisão.
+
+O placar de melhor pontuação é isolado por variante (ex: "Tabuada do 7 · Família completa" tem seu próprio recorde por nível, separado de "Todas as tabuadas").
+
 ### Níveis de dificuldade
 
 | Nível | Label | Descrição |
@@ -68,7 +79,21 @@ Foram considerados: Tabuada Game, Conta Rápida, MatQuiz, Conta Comigo, Tabuada 
 | Divisão | quoc. 1–5, div. 2–5 | quoc. 1–10, div. 2–10 | quoc. 1–20, div. 2–12 |
 | Tabuada | 1–5 × 1–5 | 1–10 × 1–10 | 1–12 × 1–12 |
 | Inteiros (+/−) | −5 a 5 | −10 a 10 | −20 a 20 |
-| Inteiros (×/÷) | −5 a 5 (excl. 0) | −10 a 10 (excl. 0) | −15 a 15 (excl. 0) |
+| Inteiros (×/÷) | −5 a 5 (excl. 0) | −10 a 10 (excl. 0) | −20 a 20 (excl. 0) |
+
+> Correção 07/08/2026: esta tabela dizia ±15 no Expert de Inteiros ×/÷, mas o código sempre usou a mesma `getIntRange()` dos outros 3 modos de inteiros (±20). A tabela estava desatualizada, não o código — nenhuma faixa numérica mudou nesta revisão.
+
+### Por que os níveis mais altos são mais difíceis (revisado em 07/08/2026)
+
+Faixas numéricas maiores por si só não garantem mais dificuldade em um jogo de múltipla escolha — dá pra "chutar por estimativa" mesmo com números grandes se as alternativas erradas estiverem longe da certa. Por isso, além da faixa numérica, cada questão escolhe as alternativas erradas com um "erro plausível" (ex: `7 × 9` errado como `7 × 8` ou `6 × 9`, `48 + 10` errado como `59` ou `57`) — a proporção de alternativas plausíveis vs. genéricas cresce por nível:
+
+| Nível | Alternativas "erro plausível" (das 3 erradas) |
+|---|---|
+| Iniciante | 1 |
+| Desafiador | 2 |
+| Expert | 3 |
+
+No Expert, as 3 alternativas erradas são sempre erros plausíveis — exige cálculo/memória real, não estimativa. Em Números Inteiros, o erro mais comum (inverter o sinal) é sempre priorizado como uma das alternativas. Implementado em `pickOptions()` / `getConfusableCount()` no `gameEngine.ts`.
 
 ### Regras do jogo
 
@@ -110,9 +135,10 @@ base-certa/
 │   │
 │   ├── components/
 │   │   ├── HomeScreen.tsx    — Tela inicial com os 9 modos
-│   │   ├── DifficultyScreen.tsx — Seleção de nível + melhor pontuação
+│   │   ├── TabuadaSetupScreen.tsx — Escolha de tabuada específica + família de operações (só no modo Tabuada)
+│   │   ├── DifficultyScreen.tsx — Seleção de nível + melhor pontuação (aceita título/variante customizados)
 │   │   ├── GameScreen.tsx    — Pergunta, alternativas, feedback, explicação
-│   │   ├── ResultScreen.tsx  — Resultado final com acertos/erros
+│   │   ├── ResultScreen.tsx  — Resultado final com acertos/erros (aceita título/variante customizados)
 │   │   ├── OptionButton.tsx  — Botão de alternativa com estados visuais
 │   │   └── ProgressBar.tsx   — Barra de progresso da rodada
 │   │
@@ -129,20 +155,23 @@ base-certa/
 ### Fluxo de telas
 
 ```
-Home → (clica modo) → DifficultyScreen → (clica nível) → GameScreen → ResultScreen
-                                                                           ↓
-                                                               Jogar novamente → GameScreen
-                                                               Voltar ao início → Home
+Home → (clica modo) ────────────────────────────┐
+         │                                       ↓
+         │ (modo = Tabuada)          DifficultyScreen → (clica nível) → GameScreen → ResultScreen
+         ↓                                       ↑                                       ↓
+   TabuadaSetupScreen ──(Continuar)───────────────┘                          Jogar novamente → GameScreen
+         ↑                                                                   Voltar ao início → Home
+         └── Voltar (da DifficultyScreen, só quando o modo é Tabuada)
 ```
 
 ### Como funciona a geração de questões
 
 O `gameEngine.ts` gera questões dinamicamente para cada modo e nível. Para cada questão:
 
-1. Gera os operandos aleatoriamente dentro da faixa do nível
+1. Gera os operandos aleatoriamente dentro da faixa do nível (ou, no modo Tabuada com número específico, sorteia o parceiro `b` e monta a família de fatos — ver `generateFocusedTabuadaQuestion()`)
 2. Calcula a resposta correta
-3. Gera 3 alternativas erradas plausíveis (próximas ao valor correto, com spread proporcional)
-4. Embaralha as 4 opções (Fisher-Yates)
+3. Monta uma lista de candidatos "erro plausível" por operação (`buildAddConfusable`, `buildSubConfusable`, `buildMulConfusable`, `buildDivConfusable`; em Inteiros, `withSignFlip` prioriza a inversão de sinal)
+4. `pickOptions()` escolhe quantos desses candidatos usar conforme o nível (`getConfusableCount`: 1 / 2 / 3) e completa o restante com alternativas genéricas próximas, depois embaralha as 4 opções (Fisher-Yates)
 5. Cria a explicação com os números reais da questão
 6. Garante 10 questões únicas por rodada (sem repetição de texto)
 
@@ -165,21 +194,24 @@ O `gameEngine.ts` gera questões dinamicamente para cada modo e nível. Para cad
 ## 5. Componentes em Detalhe
 
 ### `page.tsx` — Orquestrador
-Controla qual tela está ativa (`home`, `difficulty`, `game`, `result`). Passa callbacks para os componentes filhos. Não contém lógica de jogo.
+Controla qual tela está ativa (`home`, `tabuada-setup`, `difficulty`, `game`, `result`). Guarda o `tabuadaConfig` (número específico + família de operações, quando aplicável) e monta o título/variante customizados que descem para `DifficultyScreen`/`ResultScreen`. Passa callbacks para os componentes filhos. Não contém lógica de jogo.
+
+### `TabuadaSetupScreen.tsx` — Configuração da Tabuada
+Só aparece quando o modo escolhido é Tabuada. Deixa escolher "Todas as tabuadas" ou um número de 1 a 12, e — só quando um número é escolhido — "Só multiplicação" ou "Família completa". Devolve um `TabuadaConfig` para o `page.tsx` via `onContinue`.
 
 ### `useGameSession.ts` — Hook central
 Toda a lógica de uma partida:
-- `startGame(mode, level)` — gera as questões e inicializa o estado
+- `startGame(mode, level, tabuadaConfig?)` — gera as questões e inicializa o estado
 - `selectOption(value)` — registra a resposta e aciona o feedback
 - `nextQuestion()` — avança para a próxima questão ou finaliza
 - `resetGame()` — volta ao estado inicial
-- Usa `useRef` para score e mode — evita problemas de closure stale em callbacks
+- Usa `useRef` para score, mode e variante — evita problemas de closure stale em callbacks
 
 ### `gameEngine.ts` — Motor de questões
-Funções puras, sem estado. Recebe modo + nível e retorna array de 10 questões únicas com texto, opções, resposta correta e explicação.
+Funções puras, sem estado. Recebe modo + nível (+ `tabuadaConfig` opcional) e retorna array de 10 questões únicas com texto, opções, resposta correta e explicação. Ver "Como funciona a geração de questões" acima para o sistema de alternativas plausíveis.
 
 ### `storage.ts` — Persistência
-Salva e lê histórico no LocalStorage. Chave composta `modo__nível` para separar os recordes. Protegido com `try/catch` para não quebrar em modo privado ou storage cheio.
+Salva e lê histórico no LocalStorage. Chave composta `modo__nível` (ou `modo__nível__variante` para tabuadas específicas, via `tabuadaVariantKey()`) para separar os recordes. Protegido com `try/catch` para não quebrar em modo privado ou storage cheio.
 
 ---
 
@@ -196,11 +228,13 @@ Salva e lê histórico no LocalStorage. Chave composta `modo__nível` para separ
 ### Para atualizar o app após mudanças
 
 ```bash
-cd "D:/1. PROJETOS/CLAUDE CODE/IMERSAO COM TATA/base-certa"
+cd "D:/1. PROJETOS/APPS/base-certa"
 git add .
 git commit -m "descrição do que foi alterado"
 git push
 ```
+
+> A pasta mudou em 07/08/2026 (de `CLAUDE CODE/IMERSAO COM TATA/base-certa` para `APPS/base-certa`) — o repo Git e o link da Vercel não são afetados pela mudança de pasta local.
 
 A Vercel detecta o push e faz o novo deploy automaticamente em ~1 minuto.
 
@@ -211,7 +245,7 @@ A Vercel detecta o push e faz o novo deploy automaticamente em ~1 minuto.
 ### Curto prazo
 - [ ] Revisar as explicações pedagógicas dos inteiros com olhar de professor
 - [ ] Testar com a Yasmin e coletar feedback real de uso
-- [ ] Ajustar faixas numéricas se algum nível estiver fácil ou difícil demais
+- [x] ~~Ajustar faixas numéricas se algum nível estiver fácil ou difícil demais~~ — resolvido em 07/08/2026, mas não mexendo nas faixas: o problema real era a distância das alternativas erradas (ver "Por que os níveis mais altos são mais difíceis" acima)
 
 ### Médio prazo
 - [ ] Adicionar sons simples (acerto/erro) — melhora a experiência lúdica
@@ -234,3 +268,4 @@ A Vercel detecta o push e faz o novo deploy automaticamente em ~1 minuto.
 ---
 
 *Documento gerado em 22/03/2026 — Base Certa v1.0*
+*Atualizado em 07/08/2026 — v1.1: seleção de tabuada específica, família de operações (+, −, ×, ÷) focada em um número, e alternativas erradas com dificuldade progressiva por nível*

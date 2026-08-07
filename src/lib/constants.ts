@@ -26,6 +26,8 @@ export const MODE_GROUPS: ModeGroup[] = [
 
 export const QUESTIONS_PER_ROUND = 10
 
+export const TABUADA_NUMBERS = Array.from({ length: 12 }, (_, i) => i + 1)
+
 export const DIFFICULTY_LEVELS: DifficultyConfig[] = [
   {
     id: 'beginner',

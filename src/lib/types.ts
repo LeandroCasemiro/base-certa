@@ -11,6 +11,11 @@ export type GameMode =
 
 export type DifficultyLevel = 'beginner' | 'intermediate' | 'expert'
 
+export interface TabuadaConfig {
+  focusNumber: number | null
+  family: boolean
+}
+
 export interface DifficultyConfig {
   id: DifficultyLevel
   label: string
@@ -44,4 +49,5 @@ export interface HistoryEntry {
   level: DifficultyLevel
   score: number
   date: string
+  variant?: string
 }

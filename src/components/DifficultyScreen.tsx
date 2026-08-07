@@ -10,6 +10,8 @@ interface DifficultyScreenProps {
   mode: GameMode
   onSelectLevel: (level: DifficultyLevel) => void
   onBack: () => void
+  titleOverride?: string
+  variant?: string
 }
 
 function getModeName(mode: GameMode): string {
@@ -45,7 +47,7 @@ const colorMap: Record<string, { card: string; badge: string; button: string }> 
   },
 }
 
-export default function DifficultyScreen({ mode, onSelectLevel, onBack }: DifficultyScreenProps) {
+export default function DifficultyScreen({ mode, onSelectLevel, onBack, titleOverride, variant }: DifficultyScreenProps) {
   const [bestScores, setBestScores] = useState<Record<DifficultyLevel, number | null>>({
     beginner: null,
     intermediate: null,
@@ -54,11 +56,11 @@ export default function DifficultyScreen({ mode, onSelectLevel, onBack }: Diffic
 
   useEffect(() => {
     setBestScores({
-      beginner: getBestScore(mode, 'beginner'),
-      intermediate: getBestScore(mode, 'intermediate'),
-      expert: getBestScore(mode, 'expert'),
+      beginner: getBestScore(mode, 'beginner', variant),
+      intermediate: getBestScore(mode, 'intermediate', variant),
+      expert: getBestScore(mode, 'expert', variant),
     })
-  }, [mode])
+  }, [mode, variant])
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col items-center px-4 py-8">
@@ -71,8 +73,10 @@ export default function DifficultyScreen({ mode, onSelectLevel, onBack }: Diffic
           >
             ← Voltar
           </button>
-          <h1 className="text-2xl font-extrabold text-slate-800">{getModeName(mode)}</h1>
-          <p className="text-sm text-slate-400 mt-1">{getGroupName(mode)} — Escolha o nível</p>
+          <h1 className="text-2xl font-extrabold text-slate-800">{titleOverride ?? getModeName(mode)}</h1>
+          <p className="text-sm text-slate-400 mt-1">
+            {titleOverride ? 'Escolha o nível' : `${getGroupName(mode)} — Escolha o nível`}
+          </p>
         </div>
 
         {/* Level cards */}

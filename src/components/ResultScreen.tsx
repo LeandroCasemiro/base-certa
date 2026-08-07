@@ -11,6 +11,8 @@ interface ResultScreenProps {
   score: number
   onPlayAgain: () => void
   onHome: () => void
+  titleOverride?: string
+  variant?: string
 }
 
 function getModeName(mode: GameMode): string {
@@ -33,14 +35,14 @@ function getEncouragementMessage(score: number): string {
   return 'Não desanima! Cada tentativa é aprendizado.'
 }
 
-export default function ResultScreen({ mode, level, score, onPlayAgain, onHome }: ResultScreenProps) {
+export default function ResultScreen({ mode, level, score, onPlayAgain, onHome, titleOverride, variant }: ResultScreenProps) {
   const errors = QUESTIONS_PER_ROUND - score
   const message = getEncouragementMessage(score)
   const [bestScore, setBestScore] = useState<number | null>(null)
 
   useEffect(() => {
-    setBestScore(getBestScore(mode, level))
-  }, [mode, level])
+    setBestScore(getBestScore(mode, level, variant))
+  }, [mode, level, variant])
 
   const isNewBest = bestScore !== null && score >= bestScore
 
@@ -50,7 +52,7 @@ export default function ResultScreen({ mode, level, score, onPlayAgain, onHome }
         <div className="text-center">
           <h1 className="text-2xl font-extrabold text-slate-800 mb-1">Resultado</h1>
           <p className="text-sm text-slate-400">
-            {getModeName(mode)} · {getLevelLabel(level)}
+            {titleOverride ?? getModeName(mode)} · {getLevelLabel(level)}
           </p>
         </div>
 

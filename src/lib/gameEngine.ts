@@ -1,4 +1,4 @@
-import { DifficultyLevel, GameMode, Question } from './types'
+import { DifficultyLevel, GameMode, Question, TabuadaConfig } from './types'
 import { QUESTIONS_PER_ROUND } from './constants'
 
 function randInt(min: number, max: number): number {
@@ -18,32 +18,99 @@ function formatNumber(n: number): string {
   return String(n)
 }
 
-function generateOptions(correct: number, spread: number): number[] {
-  const candidates = new Set<number>()
+function shuffleArray<T>(arr: T[]): T[] {
+  const a = [...arr]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
+}
+
+function dedupExcluding(candidates: number[], exclude: number): number[] {
+  const set = new Set<number>()
+  for (const c of candidates) {
+    if (c !== exclude) set.add(c)
+  }
+  return Array.from(set)
+}
+
+// Fills up to `needed` distinct wrong-answer values around `correct`, avoiding
+// anything already in `avoid`. Used to top off whatever the confusable pool
+// (plausible-mistake candidates) didn't cover.
+function genericDistractors(correct: number, spread: number, needed: number, avoid: Set<number>): number[] {
+  const found = new Set<number>()
   let attempts = 0
 
-  while (candidates.size < 3 && attempts < 100) {
+  while (found.size < needed && attempts < 200) {
     attempts++
     const offset = randIntExcluding(-spread, spread, [0])
     const candidate = correct + offset
-    if (candidate !== correct) candidates.add(candidate)
+    if (!avoid.has(candidate)) found.add(candidate)
   }
 
-  const fallbackOffsets = [1, -1, 2, -2, 3, -3, 4, -4, 5, -5, 6, -6]
-  for (const offset of fallbackOffsets) {
-    if (candidates.size >= 3) break
-    const candidate = correct + offset
-    if (candidate !== correct) candidates.add(candidate)
+  let step = 1
+  while (found.size < needed && step < 100) {
+    for (const sign of [1, -1]) {
+      if (found.size >= needed) break
+      const candidate = correct + sign * step
+      if (!avoid.has(candidate)) found.add(candidate)
+    }
+    step++
   }
 
-  const options = [correct, ...Array.from(candidates).slice(0, 3)]
+  return Array.from(found).slice(0, needed)
+}
 
-  for (let i = options.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[options[i], options[j]] = [options[j], options[i]]
-  }
+// Builds the 4 multiple-choice options for a question. `confusable` is a list
+// of plausible-mistake values (already ordered by priority — most important
+// first), pre-shuffled by the caller when order shouldn't matter. `confusableCount`
+// (from getConfusableCount) decides how many of the 3 wrong answers come from
+// that list versus a generic nearby-number fallback — this is what makes
+// higher difficulty levels actually harder to eliminate by guesswork.
+function pickOptions(correct: number, confusable: number[], spread: number, confusableCount: number): number[] {
+  const deduped = dedupExcluding(confusable, correct)
+  const chosen = deduped.slice(0, confusableCount)
+  const avoid = new Set<number>([correct, ...chosen])
+  const remaining = 3 - chosen.length
+  const generic = remaining > 0 ? genericDistractors(correct, spread, remaining, avoid) : []
+  return shuffleArray([correct, ...chosen, ...generic])
+}
 
-  return options
+// How many of the 3 wrong answers should be "plausible mistakes" (close to
+// the real answer) instead of generic nearby numbers. Beginner stays light
+// (easy to eliminate by rough estimate); Expert is all plausible mistakes,
+// so getting it right requires real calculation/recall, not guessing.
+function getConfusableCount(level: DifficultyLevel): number {
+  if (level === 'beginner') return 1
+  if (level === 'intermediate') return 2
+  return 3
+}
+
+// Integers: the single most common real mistake is getting the magnitude
+// right but the sign wrong. Pin it first so it's always included once the
+// level asks for at least 1 confusable option.
+function withSignFlip(correct: number, rest: number[]): number[] {
+  const list: number[] = []
+  if (correct !== 0) list.push(-correct)
+  list.push(...shuffleArray(rest))
+  return list
+}
+
+function buildAddConfusable(a: number, b: number, correct: number): number[] {
+  return shuffleArray([correct + 1, correct - 1, correct + 10, correct - 10, a + (b + 1), a + (b - 1), (a + 1) + b, (a - 1) + b])
+}
+
+function buildSubConfusable(a: number, b: number, correct: number): number[] {
+  return shuffleArray([correct + 1, correct - 1, correct + 10, correct - 10, a - (b + 1), a - (b - 1)])
+}
+
+function buildMulConfusable(a: number, b: number, correct: number): number[] {
+  return shuffleArray([a * (b + 1), a * (b - 1), (a + 1) * b, (a - 1) * b, correct + a, correct - a, correct + b, correct - b])
+}
+
+function buildDivConfusable(quociente: number): number[] {
+  return shuffleArray([quociente + 1, quociente - 1, quociente + 2, quociente - 2])
 }
 
 // Ranges per difficulty
@@ -110,6 +177,8 @@ function explainIntMul(a: number, b: number, correct: number): string {
 }
 
 function generateQuestion(mode: GameMode, level: DifficultyLevel): Question {
+  const confusableCount = getConfusableCount(level)
+
   switch (mode) {
     case 'basic-add': {
       const r = getBasicAddRange(level)
@@ -119,7 +188,7 @@ function generateQuestion(mode: GameMode, level: DifficultyLevel): Question {
       return {
         text: `${a} + ${b} = ?`,
         correct,
-        options: generateOptions(correct, getSpread(level, correct)),
+        options: pickOptions(correct, buildAddConfusable(a, b, correct), getSpread(level, correct), confusableCount),
         explanation: `Some ${a} com ${b}: ${a} + ${b} = ${correct}.`,
       }
     }
@@ -131,7 +200,7 @@ function generateQuestion(mode: GameMode, level: DifficultyLevel): Question {
       return {
         text: `${a} − ${b} = ?`,
         correct,
-        options: generateOptions(correct, getSpread(level, correct)),
+        options: pickOptions(correct, buildSubConfusable(a, b, correct), getSpread(level, correct), confusableCount),
         explanation: `Retire ${b} de ${a}: ${a} − ${b} = ${correct}.`,
       }
     }
@@ -143,7 +212,7 @@ function generateQuestion(mode: GameMode, level: DifficultyLevel): Question {
       return {
         text: `${a} × ${b} = ?`,
         correct,
-        options: generateOptions(correct, getSpread(level, correct)),
+        options: pickOptions(correct, buildMulConfusable(a, b, correct), getSpread(level, correct), confusableCount),
         explanation: `${a} grupos de ${b}: ${a} × ${b} = ${correct}. Lembre: ${b} × ${a} também vale ${correct}.`,
       }
     }
@@ -155,7 +224,7 @@ function generateQuestion(mode: GameMode, level: DifficultyLevel): Question {
       return {
         text: `${dividendo} ÷ ${divisor} = ?`,
         correct: quociente,
-        options: generateOptions(quociente, getSpread(level, quociente)),
+        options: pickOptions(quociente, buildDivConfusable(quociente), getSpread(level, quociente), confusableCount),
         explanation: `${divisor} × ${quociente} = ${dividendo}, então ${dividendo} ÷ ${divisor} = ${quociente}.`,
       }
     }
@@ -167,7 +236,7 @@ function generateQuestion(mode: GameMode, level: DifficultyLevel): Question {
       return {
         text: `${a} × ${b} = ?`,
         correct,
-        options: generateOptions(correct, getSpread(level, correct)),
+        options: pickOptions(correct, buildMulConfusable(a, b, correct), getSpread(level, correct), confusableCount),
         explanation: `Tabuada do ${a}: ${a} × ${b} = ${correct}. Grave este resultado!`,
       }
     }
@@ -179,7 +248,12 @@ function generateQuestion(mode: GameMode, level: DifficultyLevel): Question {
       return {
         text: `${formatNumber(a)} + ${formatNumber(b)} = ?`,
         correct,
-        options: generateOptions(correct, getSpread(level, Math.abs(correct) + 3)),
+        options: pickOptions(
+          correct,
+          withSignFlip(correct, buildAddConfusable(a, b, correct)),
+          getSpread(level, Math.abs(correct) + 3),
+          confusableCount
+        ),
         explanation: explainIntAdd(a, b, correct),
       }
     }
@@ -192,7 +266,12 @@ function generateQuestion(mode: GameMode, level: DifficultyLevel): Question {
       return {
         text: `${formatNumber(a)} − ${formatNumber(b)} = ?`,
         correct,
-        options: generateOptions(correct, getSpread(level, Math.abs(correct) + 3)),
+        options: pickOptions(
+          correct,
+          withSignFlip(correct, buildSubConfusable(a, b, correct)),
+          getSpread(level, Math.abs(correct) + 3),
+          confusableCount
+        ),
         explanation: `Subtrair ${formatNumber(b)} é somar ${formatNumber(negB)}: ${formatNumber(a)} + ${formatNumber(negB)} = ${correct}.`,
       }
     }
@@ -204,7 +283,12 @@ function generateQuestion(mode: GameMode, level: DifficultyLevel): Question {
       return {
         text: `${formatNumber(a)} × ${formatNumber(b)} = ?`,
         correct,
-        options: generateOptions(correct, getSpread(level, Math.abs(correct) + 5)),
+        options: pickOptions(
+          correct,
+          withSignFlip(correct, buildMulConfusable(a, b, correct)),
+          getSpread(level, Math.abs(correct) + 5),
+          confusableCount
+        ),
         explanation: explainIntMul(a, b, correct),
       }
     }
@@ -218,21 +302,90 @@ function generateQuestion(mode: GameMode, level: DifficultyLevel): Question {
       return {
         text: `${formatNumber(dividendo)} ÷ ${formatNumber(divisor)} = ?`,
         correct: quociente,
-        options: generateOptions(quociente, getSpread(level, Math.abs(quociente) + 3)),
+        options: pickOptions(
+          quociente,
+          withSignFlip(quociente, buildDivConfusable(quociente)),
+          getSpread(level, Math.abs(quociente) + 3),
+          confusableCount
+        ),
         explanation: `${signRule} ${formatNumber(divisor)} × ${quociente} = ${dividendo}, então o resultado é ${quociente}.`,
       }
     }
   }
 }
 
-export function generateSession(mode: GameMode, level: DifficultyLevel): Question[] {
+type FocusOp = 'add' | 'sub' | 'mul' | 'div'
+
+// "Fact family" question for a fixed tabuada number N: draws a random partner
+// b (same per-level range as the regular Tabuada mode) and asks a fact
+// related to N × b — either the multiplication/division pair alone, or all
+// 4 operations when `family` is on. Every explanation ties back to the
+// multiplication fact so the connection between operations is explicit.
+function generateFocusedTabuadaQuestion(n: number, level: DifficultyLevel, family: boolean): Question {
+  const maxPartner = getTabuadaRange(level)
+  const b = randInt(1, maxPartner)
+  const confusableCount = getConfusableCount(level)
+  const product = n * b
+  const sum = n + b
+
+  const ops: FocusOp[] = family ? ['add', 'sub', 'mul', 'div'] : ['mul']
+  const op = ops[randInt(0, ops.length - 1)]
+
+  switch (op) {
+    case 'add': {
+      const flip = Math.random() < 0.5
+      return {
+        text: flip ? `${b} + ${n} = ?` : `${n} + ${b} = ?`,
+        correct: sum,
+        options: pickOptions(sum, buildAddConfusable(n, b, sum), getSpread(level, sum), confusableCount),
+        explanation: `Isso vem da tabuada do ${n}: ${n} × ${b} = ${product}. Aqui é a soma relacionada: ${n} + ${b} = ${sum}.`,
+      }
+    }
+    case 'sub': {
+      const subtractN = Math.random() < 0.5
+      const subtracted = subtractN ? n : b
+      const correct = subtractN ? b : n
+      return {
+        text: `${sum} − ${subtracted} = ?`,
+        correct,
+        options: pickOptions(correct, buildSubConfusable(sum, subtracted, correct), getSpread(level, correct), confusableCount),
+        explanation: `Isso vem da tabuada do ${n}: ${n} × ${b} = ${product}. Aqui é a subtração relacionada: ${sum} − ${subtracted} = ${correct}.`,
+      }
+    }
+    case 'mul': {
+      const flip = Math.random() < 0.5
+      return {
+        text: flip ? `${b} × ${n} = ?` : `${n} × ${b} = ?`,
+        correct: product,
+        options: pickOptions(product, buildMulConfusable(n, b, product), getSpread(level, product), confusableCount),
+        explanation: `Tabuada do ${n}: ${n} × ${b} = ${product}. Grave este resultado!`,
+      }
+    }
+    case 'div': {
+      const divideByN = Math.random() < 0.5
+      const divisor = divideByN ? n : b
+      const correct = divideByN ? b : n
+      return {
+        text: `${product} ÷ ${divisor} = ?`,
+        correct,
+        options: pickOptions(correct, buildDivConfusable(correct), getSpread(level, correct), confusableCount),
+        explanation: `Isso vem da tabuada do ${n}: ${n} × ${b} = ${product}, então ${product} ÷ ${divisor} = ${correct}.`,
+      }
+    }
+  }
+}
+
+export function generateSession(mode: GameMode, level: DifficultyLevel, tabuadaConfig?: TabuadaConfig): Question[] {
   const questions: Question[] = []
   const seen = new Set<string>()
+  const focusNumber = mode === 'tabuada' ? tabuadaConfig?.focusNumber ?? null : null
 
   let attempts = 0
   while (questions.length < QUESTIONS_PER_ROUND && attempts < 300) {
     attempts++
-    const q = generateQuestion(mode, level)
+    const q = focusNumber
+      ? generateFocusedTabuadaQuestion(focusNumber, level, tabuadaConfig?.family ?? false)
+      : generateQuestion(mode, level)
     if (!seen.has(q.text)) {
       seen.add(q.text)
       questions.push(q)
