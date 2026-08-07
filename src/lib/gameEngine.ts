@@ -62,6 +62,19 @@ function genericDistractors(correct: number, spread: number, needed: number, avo
   return Array.from(found).slice(0, needed)
 }
 
+// correct + múltiplo de 10 sempre termina no mesmo algarismo da unidade —
+// garante uma alternativa errada que não dá pra descartar só olhando o
+// último dígito da resposta certa.
+function sameUnitsDigitDistractor(correct: number, avoid: Set<number>): number | null {
+  for (let k = 1; k <= 20; k++) {
+    for (const sign of [1, -1]) {
+      const candidate = correct + sign * k * 10
+      if (candidate !== correct && !avoid.has(candidate)) return candidate
+    }
+  }
+  return null
+}
+
 // Builds the 4 multiple-choice options for a question. `confusable` is a list
 // of plausible-mistake values (already ordered by priority — most important
 // first), pre-shuffled by the caller when order shouldn't matter. `confusableCount`
@@ -69,12 +82,29 @@ function genericDistractors(correct: number, spread: number, needed: number, avo
 // that list versus a generic nearby-number fallback — this is what makes
 // higher difficulty levels actually harder to eliminate by guesswork.
 function pickOptions(correct: number, confusable: number[], spread: number, confusableCount: number): number[] {
-  const deduped = dedupExcluding(confusable, correct)
-  const chosen = deduped.slice(0, confusableCount)
-  const avoid = new Set<number>([correct, ...chosen])
-  const remaining = 3 - chosen.length
+  const wrong: number[] = []
+  const avoid = new Set<number>([correct])
+
+  // A partir do Desafiador (confusableCount >= 2), reserva uma das opções
+  // erradas pra terminar no mesmo algarismo da unidade da resposta certa.
+  if (confusableCount >= 2) {
+    const sameUnits = sameUnitsDigitDistractor(correct, avoid)
+    if (sameUnits !== null) {
+      wrong.push(sameUnits)
+      avoid.add(sameUnits)
+    }
+  }
+
+  const deduped = dedupExcluding(confusable, correct).filter((c) => !avoid.has(c))
+  for (const c of deduped) {
+    if (wrong.length >= confusableCount) break
+    wrong.push(c)
+    avoid.add(c)
+  }
+
+  const remaining = 3 - wrong.length
   const generic = remaining > 0 ? genericDistractors(correct, spread, remaining, avoid) : []
-  return shuffleArray([correct, ...chosen, ...generic])
+  return shuffleArray([correct, ...wrong, ...generic])
 }
 
 // How many of the 3 wrong answers should be "plausible mistakes" (close to

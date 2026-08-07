@@ -105,6 +105,8 @@ Faixas numéricas maiores por si só não garantem mais dificuldade em um jogo d
 
 No Expert, as 3 alternativas erradas são sempre erros plausíveis — exige cálculo/memória real, não estimativa. Em Números Inteiros, o erro mais comum (inverter o sinal) é sempre priorizado como uma das alternativas. Implementado em `pickOptions()` / `getConfusableCount()` no `gameEngine.ts`.
 
+**Mesmo algarismo da unidade (adicionado em 07/08/2026):** no Desafiador e no Expert, uma das alternativas erradas sempre termina no mesmo algarismo da unidade da resposta certa (ex: correta `1704`, errada `1714` — as duas terminam em 4). Sem isso dava pra eliminar alternativas só olhando o último dígito, sem calcular nada. Implementado em `sameUnitsDigitDistractor()`, chamado dentro do próprio `pickOptions()` quando `confusableCount >= 2`. No Iniciante não entra — lá o objetivo ainda é deixar eliminar por estimativa.
+
 ### Regras do jogo
 
 - 10 perguntas por rodada
