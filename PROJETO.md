@@ -73,15 +73,16 @@ O placar de melhor pontuação é isolado por variante (ex: "Tabuada do 7 · Fam
 
 | Modo | Iniciante | Desafiador | Expert |
 |---|---|---|---|
-| Adição | 1–10 + 1–10 | 1–20 + 1–20 | 1–50 + 1–50 |
-| Subtração | até 15, positivo | até 30, positivo | até 100, positivo |
-| Multiplicação | 2–5 × 2–5 | 2–12 × 2–9 | 2–15 × 2–12 |
-| Divisão | quoc. 1–5, div. 2–5 | quoc. 1–10, div. 2–10 | quoc. 1–20, div. 2–12 |
+| Adição | 1–10 + 1–10 | 11–35 + 11–35 | 36–99 + 36–99 |
+| Subtração | 2–15, subtraendo 1+ | 16–50, subtraendo 6+ | 51–100, subtraendo 16+ |
+| Multiplicação | 2–5 × 2–5 | 2–12 × 6–20 | 2–15 × 21–50 |
+| Divisão | quoc. 1–5, div. 2–5 | quoc. 6–15, div. 6–10 | quoc. 16–30, div. 11–20 |
 | Tabuada | número × 1–10 | número × 11–100 | número × 101–999 |
-| Inteiros (+/−) | −5 a 5 | −10 a 10 | −20 a 20 |
-| Inteiros (×/÷) | −5 a 5 (excl. 0) | −10 a 10 (excl. 0) | −20 a 20 (excl. 0) |
+| Inteiros (+/−, ×/÷) | magnitude 1–5 | magnitude 6–15 | magnitude 16–30 |
 
-> Correção 07/08/2026: esta tabela dizia ±15 no Expert de Inteiros ×/÷, mas o código sempre usou a mesma `getIntRange()` dos outros 3 modos de inteiros (±20). A tabela estava desatualizada, não o código — nenhuma faixa numérica mudou nesta revisão.
+> **Correção 08/08/2026 — o piso agora sobe junto com o teto.** Até essa data, os ranges só cresciam o teto por nível — o piso ficava sempre igual (ex: Multiplicação sempre permitia `2×2` até `2×5`, em qualquer nível), porque cada faixa de nível era um superconjunto da anterior. Isso deixava fatos triviais (ex: `6×5` no Expert) vazarem pros níveis mais difíceis, o mesmo defeito que a Tabuada teve. Agora, em todo modo, o piso de um nível fica estritamente acima do teto do nível anterior — nenhuma conta reconhecível de um nível mais fácil pode sortear num nível mais difícil. Inteiros deixou de ser um range simétrico `-R..R` (que sempre continha valores pequenos como ±1) e passou a sortear por banda de magnitude com sinal aleatório (`randIntBand`), do mesmo jeito.
+>
+> (Correção anterior, 07/08/2026: esta tabela dizia ±15 no Expert de Inteiros ×/÷, mas o código sempre usou a mesma faixa dos outros 3 modos de inteiros — a tabela estava desatualizada, não o código.)
 
 ### Tabuada — o nível escala o multiplicador, não o produto (corrigido em 07/08/2026)
 
@@ -292,3 +293,4 @@ A Vercel detecta o push e faz o novo deploy automaticamente em ~1 minuto.
 *Documento gerado em 22/03/2026 — Base Certa v1.0*
 *Atualizado em 07/08/2026 — v1.1: seleção de tabuada específica, família de operações (+, −, ×, ÷) focada em um número, e alternativas erradas com dificuldade progressiva por nível*
 *Atualizado em 07/08/2026 — v1.2: corrige o critério de nível da Tabuada — escala o multiplicador (1–10 / 11–100 / 101–999), não o produto, pra funcionar em qualquer tabuada escolhida*
+*Atualizado em 08/08/2026 — v1.3: mesmo algarismo da unidade (Desafiador = 2 das 4, Expert = as 4) e piso disjunto por nível em todos os 8 modos restantes (Adição, Subtração, Multiplicação, Divisão, os 4 de Inteiros) — nenhuma conta trivial de um nível mais fácil vaza pros mais difíceis*

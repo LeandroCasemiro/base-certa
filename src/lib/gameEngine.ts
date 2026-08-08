@@ -198,28 +198,35 @@ function buildDivConfusable(quociente: number): number[] {
 // Ranges per difficulty
 type Range = { min: number; max: number }
 
+// O piso sobe estritamente acima do teto do nível anterior — sem isso, uma
+// conta fácil do Iniciante (ex: 6×5) podia sortear de novo no Expert, porque
+// os ranges antigos só cresciam o teto e nunca o piso (mesmo defeito que a
+// Tabuada tinha antes de "número escolhido × 101-999").
 function getBasicAddRange(level: DifficultyLevel): Range {
   if (level === 'beginner') return { min: 1, max: 10 }
-  if (level === 'intermediate') return { min: 1, max: 20 }
-  return { min: 1, max: 50 }
+  if (level === 'intermediate') return { min: 11, max: 35 }
+  return { min: 36, max: 99 }
 }
 
-function getBasicSubRange(level: DifficultyLevel): number {
-  if (level === 'beginner') return 15
-  if (level === 'intermediate') return 30
-  return 100
+// `minSubtrahend` evita que o `b` (o que é subtraído) fique pequeno demais
+// mesmo com `a` grande — sem isso, "80 − 5" passava por Expert só porque
+// o 80 é grande, apesar de subtrair 5 ser tão fácil quanto no Iniciante.
+function getBasicSubRange(level: DifficultyLevel): Range & { minSubtrahend: number } {
+  if (level === 'beginner') return { min: 2, max: 15, minSubtrahend: 1 }
+  if (level === 'intermediate') return { min: 16, max: 50, minSubtrahend: 6 }
+  return { min: 51, max: 100, minSubtrahend: 16 }
 }
 
 function getBasicMulRange(level: DifficultyLevel): { a: Range; b: Range } {
   if (level === 'beginner') return { a: { min: 2, max: 5 }, b: { min: 2, max: 5 } }
-  if (level === 'intermediate') return { a: { min: 2, max: 12 }, b: { min: 2, max: 9 } }
-  return { a: { min: 2, max: 15 }, b: { min: 2, max: 12 } }
+  if (level === 'intermediate') return { a: { min: 2, max: 12 }, b: { min: 6, max: 20 } }
+  return { a: { min: 2, max: 15 }, b: { min: 21, max: 50 } }
 }
 
 function getBasicDivRange(level: DifficultyLevel): { q: Range; d: Range } {
   if (level === 'beginner') return { q: { min: 1, max: 5 }, d: { min: 2, max: 5 } }
-  if (level === 'intermediate') return { q: { min: 1, max: 10 }, d: { min: 2, max: 10 } }
-  return { q: { min: 1, max: 20 }, d: { min: 2, max: 12 } }
+  if (level === 'intermediate') return { q: { min: 6, max: 15 }, d: { min: 6, max: 10 } }
+  return { q: { min: 16, max: 30 }, d: { min: 11, max: 20 } }
 }
 
 // O nível escala o MULTIPLICADOR (o "vezes X"), não o produto — pra qualquer
@@ -234,10 +241,18 @@ function getTabuadaRange(level: DifficultyLevel): Range {
   return { min: 101, max: 999 }
 }
 
-function getIntRange(level: DifficultyLevel): number {
-  if (level === 'beginner') return 5
-  if (level === 'intermediate') return 10
-  return 20
+// Banda de magnitude (valor absoluto) — o piso sobe por nível, igual às faixas
+// acima. randIntBand sorteia dentro dessa banda e decide o sinal por conta
+// própria, então já garante o zero excluído (min >= 1 em todo nível).
+function getIntMagnitudeRange(level: DifficultyLevel): Range {
+  if (level === 'beginner') return { min: 1, max: 5 }
+  if (level === 'intermediate') return { min: 6, max: 15 }
+  return { min: 16, max: 30 }
+}
+
+function randIntBand(min: number, max: number): number {
+  const magnitude = randInt(min, max)
+  return Math.random() < 0.5 ? magnitude : -magnitude
 }
 
 function getSpread(level: DifficultyLevel, base: number): number {
@@ -281,9 +296,9 @@ function generateQuestion(mode: GameMode, level: DifficultyLevel): Question {
       }
     }
     case 'basic-sub': {
-      const max = getBasicSubRange(level)
-      const a = randInt(2, max)
-      const b = randInt(1, a - 1)
+      const r = getBasicSubRange(level)
+      const a = randInt(r.min, r.max)
+      const b = randInt(r.minSubtrahend, a - 1)
       const correct = a - b
       return {
         text: `${a} − ${b} = ?`,
@@ -329,9 +344,9 @@ function generateQuestion(mode: GameMode, level: DifficultyLevel): Question {
       }
     }
     case 'int-add': {
-      const r = getIntRange(level)
-      const a = randInt(-r, r)
-      const b = randInt(-r, r)
+      const r = getIntMagnitudeRange(level)
+      const a = randIntBand(r.min, r.max)
+      const b = randIntBand(r.min, r.max)
       const correct = a + b
       return {
         text: `${formatNumber(a)} + ${formatNumber(b)} = ?`,
@@ -347,9 +362,9 @@ function generateQuestion(mode: GameMode, level: DifficultyLevel): Question {
       }
     }
     case 'int-sub': {
-      const r = getIntRange(level)
-      const a = randInt(-r, r)
-      const b = randInt(-r, r)
+      const r = getIntMagnitudeRange(level)
+      const a = randIntBand(r.min, r.max)
+      const b = randIntBand(r.min, r.max)
       const correct = a - b
       const negB = -b
       return {
@@ -366,9 +381,9 @@ function generateQuestion(mode: GameMode, level: DifficultyLevel): Question {
       }
     }
     case 'int-mul': {
-      const r = getIntRange(level)
-      const a = randIntExcluding(-r, r, [0])
-      const b = randIntExcluding(-r, r, [0])
+      const r = getIntMagnitudeRange(level)
+      const a = randIntBand(r.min, r.max)
+      const b = randIntBand(r.min, r.max)
       const correct = a * b
       return {
         text: `${formatNumber(a)} × ${formatNumber(b)} = ?`,
@@ -384,9 +399,9 @@ function generateQuestion(mode: GameMode, level: DifficultyLevel): Question {
       }
     }
     case 'int-div': {
-      const r = getIntRange(level)
-      const quociente = randIntExcluding(-r, r, [0])
-      const divisor = randIntExcluding(-r, r, [0])
+      const r = getIntMagnitudeRange(level)
+      const quociente = randIntBand(r.min, r.max)
+      const divisor = randIntBand(r.min, r.max)
       const dividendo = quociente * divisor
       const sameSign = (quociente > 0 && divisor > 0) || (quociente < 0 && divisor < 0)
       const signRule = sameSign ? 'Sinais iguais → resultado positivo.' : 'Sinais diferentes → resultado negativo.'
