@@ -21,15 +21,15 @@ export default function OptionButton({
     'w-full py-4 px-6 rounded-xl text-lg font-semibold border-2 transition-all duration-200 text-left '
 
   if (feedback === 'idle') {
-    className += 'bg-white border-slate-200 hover:border-blue-400 hover:bg-blue-50 cursor-pointer active:scale-95'
+    className += 'bg-white border-border hover:border-primary hover:bg-bg-d cursor-pointer active:scale-95'
   } else if (isSelected && feedback === 'correct') {
-    className += 'bg-green-500 border-green-500 text-white'
+    className += 'bg-success border-success text-white'
   } else if (isSelected && feedback === 'wrong') {
-    className += 'bg-red-500 border-red-500 text-white'
+    className += 'bg-error border-error text-white'
   } else if (!isSelected && isCorrect && feedback === 'wrong') {
-    className += 'bg-green-500 border-green-500 text-white'
+    className += 'bg-success border-success text-white'
   } else {
-    className += 'bg-white border-slate-200 opacity-40 cursor-not-allowed'
+    className += 'bg-white border-border opacity-40 cursor-not-allowed'
   }
 
   return (

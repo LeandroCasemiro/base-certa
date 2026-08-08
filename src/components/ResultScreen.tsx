@@ -47,23 +47,23 @@ export default function ResultScreen({ mode, level, score, onPlayAgain, onHome, 
   const isNewBest = bestScore !== null && score >= bestScore
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col items-center px-4 py-10">
+    <div className="min-h-screen bg-bg flex flex-col items-center px-4 py-10">
       <div className="w-full max-w-md flex flex-col gap-6">
         <div className="text-center">
-          <h1 className="text-2xl font-extrabold text-slate-800 mb-1">Resultado</h1>
-          <p className="text-sm text-slate-400">
+          <h1 className="text-2xl font-heading font-black text-ink mb-1">Resultado</h1>
+          <p className="text-sm text-muted">
             {titleOverride ?? getModeName(mode)} · {getLevelLabel(level)}
           </p>
         </div>
 
         {/* Score card */}
-        <div className="bg-white rounded-2xl border-2 border-slate-200 p-8 text-center flex flex-col gap-2">
-          <span className="text-6xl font-extrabold text-blue-600">
+        <div className="bg-white rounded-xl border-2 border-border p-8 text-center flex flex-col gap-2">
+          <span className="text-6xl font-heading font-black text-primary">
             {score}/{QUESTIONS_PER_ROUND}
           </span>
-          <p className="text-slate-500 text-sm font-medium">{message}</p>
+          <p className="text-soft text-sm font-medium">{message}</p>
           {isNewBest && (
-            <span className="text-xs font-bold text-green-600 uppercase tracking-wider mt-1">
+            <span className="text-xs font-bold text-success uppercase tracking-wider mt-1">
               Novo recorde neste nível!
             </span>
           )}
@@ -71,18 +71,18 @@ export default function ResultScreen({ mode, level, score, onPlayAgain, onHome, 
 
         {/* Stats */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4 text-center">
-            <p className="text-2xl font-extrabold text-green-600">{score}</p>
-            <p className="text-xs text-green-700 font-medium mt-1">Acertos</p>
+          <div className="bg-success/10 border-2 border-success/30 rounded-xl p-4 text-center">
+            <p className="text-2xl font-heading font-black text-success">{score}</p>
+            <p className="text-xs text-success font-medium mt-1">Acertos</p>
           </div>
-          <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4 text-center">
-            <p className="text-2xl font-extrabold text-red-500">{errors}</p>
-            <p className="text-xs text-red-600 font-medium mt-1">Erros</p>
+          <div className="bg-error/10 border-2 border-error/30 rounded-xl p-4 text-center">
+            <p className="text-2xl font-heading font-black text-error">{errors}</p>
+            <p className="text-xs text-error font-medium mt-1">Erros</p>
           </div>
         </div>
 
         {bestScore !== null && !isNewBest && (
-          <p className="text-center text-xs text-slate-400">
+          <p className="text-center text-xs text-muted">
             Seu melhor neste nível: <span className="font-bold">{bestScore}/10</span>
           </p>
         )}
@@ -91,13 +91,13 @@ export default function ResultScreen({ mode, level, score, onPlayAgain, onHome, 
         <div className="flex flex-col gap-3 mt-2">
           <button
             onClick={onPlayAgain}
-            className="w-full py-4 rounded-xl bg-blue-600 text-white font-bold text-base hover:bg-blue-700 active:scale-95 transition-all"
+            className="w-full py-4 rounded-xl bg-primary text-white font-bold text-base hover:bg-primary-hover active:scale-95 transition-all"
           >
             Jogar novamente
           </button>
           <button
             onClick={onHome}
-            className="w-full py-4 rounded-xl bg-white border-2 border-slate-200 text-slate-600 font-bold text-base hover:border-slate-400 active:scale-95 transition-all"
+            className="w-full py-4 rounded-xl bg-white border-2 border-border text-soft font-bold text-base hover:border-border-strong active:scale-95 transition-all"
           >
             Voltar ao início
           </button>

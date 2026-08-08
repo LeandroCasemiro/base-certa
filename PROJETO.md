@@ -143,10 +143,31 @@ Login, banco de dados, cadastro, ranking online, painel de pais/professor, sons,
 |---|---|
 | Next.js 16 (App Router) | Framework principal |
 | TypeScript | Tipagem estática |
-| Tailwind CSS | Estilização |
+| Tailwind CSS v4 | Estilização (tokens do design system MOVIDO via `@theme` em `globals.css`) |
 | LocalStorage | Persistência do histórico |
 | Vercel | Hospedagem e deploy |
 | GitHub | Controle de versão |
+
+### Design System (adicionado em 08/08/2026)
+
+O app usa a paleta oficial do Pai MOVIDO, documentada em `/mnt/d/1. PROJETOS/CLAUDE DESIGN/DESIGN.md` (fonte única — qualquer mudança de cor/tipografia consulta esse arquivo primeiro, nunca inventa tom novo).
+
+Tokens aplicados via `@theme` em `globals.css`, virando classes Tailwind normais (`bg-primary`, `text-ink`, `border-border`, etc.):
+
+| Token | Hex | Uso no Base Certa |
+|---|---|---|
+| `primary` | `#013C6A` | Botões de ação, títulos, ícones, pontuação |
+| `primary-hover` | `#002548` | Hover de botão primário |
+| `secondary` | `#89BAD6` | Hover de cards não-selecionados |
+| `header` | `#0A1628` | Badge do nível Expert (era `purple`, que não existe na paleta MOVIDO) |
+| `bg` / `bg-d` | `#F3F4F6` / `#EEF5FB` | Fundo padrão / fundo de seleção ativa |
+| `ink` / `soft` / `muted` | `#0B0C0E` / `#4A5568` / `#7A8390` | Texto principal / secundário / terciário |
+| `border` / `border-strong` | `#C2D4E0` / `#B8C5D9` | Bordas padrão / bordas com ênfase |
+| `success` / `warning` / `error` | `#22c55e` / `#f59e0b` / `#ef4444` | Acerto / caixa de explicação do erro / erro |
+
+Tipografia: Montserrat 900 (`font-heading`) em todos os `h1`, Inter (`font-body`, padrão do `body`) no resto — troca a fonte Geist do boilerplate original do Next.js. Cards usam `rounded-xl`, redefinido pra `20px` (assinatura visual do MOVIDO) em vez do padrão do Tailwind.
+
+O nível "Expert" (antes `purple`, cor fora da paleta) virou `navy`, usando o token `header` — mantém a escalada visual crescente entre os 3 níveis (verde → azul → azul-marinho) sem inventar cor nova.
 
 ---
 
@@ -304,3 +325,4 @@ A Vercel detecta o push e faz o novo deploy automaticamente em ~1 minuto.
 *Atualizado em 08/08/2026 — v1.4: Multiplicação — os dois fatores escalam juntos (6–20 / 21–50), corrigindo um fator pequeno (ex: `2 × 29`) que sobrava por o primeiro fator ainda ficar fixo em 2–15*
 *Atualizado em 08/08/2026 — v1.5: Desafiador passa a exigir as 3 erradas com a mesma unidade da certa (igual ao Expert, sem "par" que se destaque) e os distratores passam a priorizar bater a dezena — e a centena, quando dá — não só a unidade, pra impedir eliminar por estimativa grosseira*
 *Atualizado em 08/08/2026 — v1.6: adiciona código de acesso (`PasswordGate`) antes da Home — fricção honesta, não segurança de verdade, lembra no aparelho depois de acertar uma vez*
+*Atualizado em 08/08/2026 — v1.7: aplica a paleta oficial do Pai MOVIDO (cores, Montserrat/Inter, cards com 20px de raio) em todo o app, substituindo as cores padrão do Tailwind (blue/slate/purple/amber)*

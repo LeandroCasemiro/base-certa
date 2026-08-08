@@ -29,21 +29,18 @@ function getGroupName(mode: GameMode): string {
   return ''
 }
 
-const colorMap: Record<string, { card: string; badge: string; button: string }> = {
+const colorMap: Record<string, { card: string; badge: string }> = {
   green: {
-    card: 'border-green-200 hover:border-green-400 hover:bg-green-50',
-    badge: 'bg-green-100 text-green-700',
-    button: 'bg-green-500 hover:bg-green-600 text-white',
+    card: 'border-border hover:border-success hover:bg-bg-d',
+    badge: 'bg-success/10 text-success',
   },
   blue: {
-    card: 'border-blue-200 hover:border-blue-400 hover:bg-blue-50',
-    badge: 'bg-blue-100 text-blue-700',
-    button: 'bg-blue-500 hover:bg-blue-600 text-white',
+    card: 'border-border hover:border-primary hover:bg-bg-d',
+    badge: 'bg-primary/10 text-primary',
   },
-  purple: {
-    card: 'border-purple-200 hover:border-purple-400 hover:bg-purple-50',
-    badge: 'bg-purple-100 text-purple-700',
-    button: 'bg-purple-500 hover:bg-purple-600 text-white',
+  navy: {
+    card: 'border-border hover:border-header hover:bg-bg-d',
+    badge: 'bg-header/10 text-header',
   },
 }
 
@@ -63,18 +60,18 @@ export default function DifficultyScreen({ mode, onSelectLevel, onBack, titleOve
   }, [mode, variant])
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col items-center px-4 py-8">
+    <div className="min-h-screen bg-bg flex flex-col items-center px-4 py-8">
       <div className="w-full max-w-md flex flex-col gap-6">
         {/* Header */}
         <div>
           <button
             onClick={onBack}
-            className="text-slate-400 hover:text-slate-600 text-sm font-medium transition-colors mb-4 block"
+            className="text-muted hover:text-soft text-sm font-medium transition-colors mb-4 block"
           >
             ← Voltar
           </button>
-          <h1 className="text-2xl font-extrabold text-slate-800">{titleOverride ?? getModeName(mode)}</h1>
-          <p className="text-sm text-slate-400 mt-1">
+          <h1 className="text-2xl font-heading font-black text-ink">{titleOverride ?? getModeName(mode)}</h1>
+          <p className="text-sm text-muted mt-1">
             {titleOverride ? 'Escolha o nível' : `${getGroupName(mode)} — Escolha o nível`}
           </p>
         </div>
@@ -96,20 +93,20 @@ export default function DifficultyScreen({ mode, onSelectLevel, onBack, titleOve
                   <span className={`text-xs font-bold px-3 py-1 rounded-full ${colors.badge}`}>
                     {lvl.label}
                   </span>
-                  <span className="text-sm text-slate-500">{lvl.description}</span>
+                  <span className="text-sm text-soft">{lvl.description}</span>
                 </div>
                 <div className="text-right shrink-0 ml-3">
                   {best !== null ? (
                     <div className="flex flex-col items-end">
-                      <span className={`text-sm font-bold ${isPerfect ? 'text-green-600' : 'text-slate-600'}`}>
+                      <span className={`text-sm font-bold ${isPerfect ? 'text-success' : 'text-soft'}`}>
                         {best}/{QUESTIONS_PER_ROUND}
                       </span>
                       {isPerfect && (
-                        <span className="text-xs text-green-500 font-medium">Perfeito!</span>
+                        <span className="text-xs text-success font-medium">Perfeito!</span>
                       )}
                     </div>
                   ) : (
-                    <span className="text-xs text-slate-300">Novo</span>
+                    <span className="text-xs text-muted">Novo</span>
                   )}
                 </div>
               </button>

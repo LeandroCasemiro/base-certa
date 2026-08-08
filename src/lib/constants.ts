@@ -51,6 +51,6 @@ export const DIFFICULTY_LEVELS: DifficultyConfig[] = [
     id: 'expert',
     label: 'Expert',
     description: 'Números grandes, máximo desafio',
-    color: 'purple',
+    color: 'navy',
   },
 ]
