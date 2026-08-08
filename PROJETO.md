@@ -293,6 +293,7 @@ A Vercel detecta o push e faz o novo deploy automaticamente em ~1 minuto.
 - As explicações pedagógicas para **Números Inteiros** foram geradas automaticamente. Recomenda-se revisão com olhar de professor antes de usar com alunos em contexto formal.
 - O app funciona 100% no navegador, sem instalação. Qualquer dispositivo com internet acessa pelo link da Vercel.
 - Todo o histórico fica salvo no dispositivo do aluno (LocalStorage). Se o aluno trocar de dispositivo ou limpar o cache, o histórico é perdido — isso só muda com login + banco de dados.
+- **Código de acesso (adicionado em 08/08/2026):** o app pede um código antes de liberar a Home (`PasswordGate.tsx`), guardado em `ACCESS_PASSWORD` no `constants.ts`. Depois de acertar uma vez, o navegador lembra (LocalStorage, chave `base-certa-unlocked`) e não pede de novo nesse aparelho. **Isso não é segurança de verdade** — o app não tem servidor, então o código fica visível pra quem abrir o código-fonte no navegador (DevTools). É só uma fricção honesta pra não deixar o link se espalhar sozinho, do mesmo jeito que um código na bio do Instagram. A comparação ignora maiúscula/minúscula e espaços em branco extra, pra não travar por erro de digitação de criança.
 
 ---
 
@@ -302,3 +303,4 @@ A Vercel detecta o push e faz o novo deploy automaticamente em ~1 minuto.
 *Atualizado em 08/08/2026 — v1.3: mesmo algarismo da unidade (Desafiador = 2 das 4, Expert = as 4) e piso disjunto por nível em todos os 8 modos restantes (Adição, Subtração, Multiplicação, Divisão, os 4 de Inteiros) — nenhuma conta trivial de um nível mais fácil vaza pros mais difíceis*
 *Atualizado em 08/08/2026 — v1.4: Multiplicação — os dois fatores escalam juntos (6–20 / 21–50), corrigindo um fator pequeno (ex: `2 × 29`) que sobrava por o primeiro fator ainda ficar fixo em 2–15*
 *Atualizado em 08/08/2026 — v1.5: Desafiador passa a exigir as 3 erradas com a mesma unidade da certa (igual ao Expert, sem "par" que se destaque) e os distratores passam a priorizar bater a dezena — e a centena, quando dá — não só a unidade, pra impedir eliminar por estimativa grosseira*
+*Atualizado em 08/08/2026 — v1.6: adiciona código de acesso (`PasswordGate`) antes da Home — fricção honesta, não segurança de verdade, lembra no aparelho depois de acertar uma vez*

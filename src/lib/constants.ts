@@ -26,6 +26,12 @@ export const MODE_GROUPS: ModeGroup[] = [
 
 export const QUESTIONS_PER_ROUND = 10
 
+// Não é segurança de verdade — o app não tem servidor, então isso fica
+// visível pra quem abrir o código-fonte no navegador. É só uma fricção
+// honesta pra não deixar o link se espalhar sozinho (mesma lógica de um
+// código na bio do Instagram).
+export const ACCESS_PASSWORD = 'tododiaeuaprendo'
+
 export const TABUADA_NUMBERS = Array.from({ length: 12 }, (_, i) => i + 1)
 
 export const DIFFICULTY_LEVELS: DifficultyConfig[] = [

@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { DifficultyLevel, GameMode, TabuadaConfig } from '@/lib/types'
-import { tabuadaVariantKey } from '@/lib/storage'
+import { isUnlocked, tabuadaVariantKey } from '@/lib/storage'
 import { useGameSession } from '@/hooks/useGameSession'
 import HomeScreen from '@/components/HomeScreen'
+import PasswordGate from '@/components/PasswordGate'
 import TabuadaSetupScreen from '@/components/TabuadaSetupScreen'
 import DifficultyScreen from '@/components/DifficultyScreen'
 import GameScreen from '@/components/GameScreen'
@@ -21,6 +22,11 @@ export default function Page() {
   const [screen, setScreen] = useState<Screen>('home')
   const [selectedMode, setSelectedMode] = useState<GameMode | null>(null)
   const [tabuadaConfig, setTabuadaConfig] = useState<TabuadaConfig | null>(null)
+  const [unlocked, setUnlockedState] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    setUnlockedState(isUnlocked())
+  }, [])
 
   const {
     mode,
@@ -73,6 +79,14 @@ export default function Page() {
 
   const tabuadaLabel = getTabuadaLabel(tabuadaConfig)
   const tabuadaVariant = tabuadaVariantKey(selectedMode === 'tabuada' ? tabuadaConfig : undefined)
+
+  // Evita "flash" da Home antes de saber se já tá liberado (localStorage só
+  // existe no navegador, então o primeiro render do servidor não sabe ainda).
+  if (unlocked === null) return null
+
+  if (!unlocked) {
+    return <PasswordGate onUnlock={() => setUnlockedState(true)} />
+  }
 
   // Transition to result when game finishes
   if (screen === 'game' && finished) {

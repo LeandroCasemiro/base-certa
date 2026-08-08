@@ -1,6 +1,23 @@
 import { DifficultyLevel, GameMode, HistoryEntry, TabuadaConfig } from './types'
 
 const KEY = 'base-certa-history'
+const UNLOCK_KEY = 'base-certa-unlocked'
+
+export function isUnlocked(): boolean {
+  try {
+    return localStorage.getItem(UNLOCK_KEY) === 'true'
+  } catch {
+    return false
+  }
+}
+
+export function setUnlocked(): void {
+  try {
+    localStorage.setItem(UNLOCK_KEY, 'true')
+  } catch {
+    // silently fail if storage is unavailable
+  }
+}
 
 export function tabuadaVariantKey(config?: TabuadaConfig | null): string | undefined {
   if (!config || !config.focusNumber) return undefined
