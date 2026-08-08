@@ -27,7 +27,7 @@ export default function PasswordGate({ onUnlock }: PasswordGateProps) {
     <div className="min-h-screen bg-bg flex flex-col items-center justify-center px-4 py-10">
       <div className="w-full max-w-sm flex flex-col gap-6 text-center">
         <div>
-          <h1 className="text-3xl font-heading font-black text-primary mb-2">Base Certa</h1>
+          <h1 className="text-3xl font-heading font-black text-ink mb-2">Base Certa</h1>
           <p className="text-soft text-sm">Digite o código de acesso pra entrar</p>
         </div>
 

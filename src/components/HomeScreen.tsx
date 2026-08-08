@@ -12,7 +12,7 @@ export default function HomeScreen({ onSelectMode }: HomeScreenProps) {
     <div className="min-h-screen bg-bg flex flex-col items-center px-4 py-10">
       <div className="w-full max-w-md">
         <div className="text-center mb-10">
-          <h1 className="text-4xl font-heading font-black text-primary mb-2">Base Certa</h1>
+          <h1 className="text-4xl font-heading font-black text-ink mb-2">Base Certa</h1>
           <p className="text-soft text-base">Pratique matemática de forma leve e rápida</p>
         </div>
 
