@@ -108,15 +108,19 @@ Faixas numéricas maiores por si só não garantem mais dificuldade em um jogo d
 
 No Expert, as 3 alternativas erradas são sempre erros plausíveis — exige cálculo/memória real, não estimativa. Em Números Inteiros, o erro mais comum (inverter o sinal) é sempre priorizado como uma das alternativas. Implementado em `pickOptions()` / `getConfusableCount()` no `gameEngine.ts`.
 
-**Mesmo algarismo da unidade — Desafiador e Expert (adicionado em 07/08/2026, ajustado no mesmo dia):**
+**Mesma unidade, dezena e (quando dá) centena — Desafiador e Expert (adicionado em 07/08/2026, evoluído em 08/08/2026):**
 
-| Nível | Alternativas com a mesma unidade | Exemplo |
-|---|---|---|
-| Iniciante | nenhuma exigência | — |
-| Desafiador | exatamente 2 das 4 (a certa + 1 forçada) | certa `486`, forçada `496` |
-| Expert | as 4 (a certa + as 3 erradas) | certa `17`, erradas `37`, `27`, `7` |
+A partir do Desafiador (não só Expert), as 3 alternativas erradas sempre terminam no mesmo algarismo da unidade da certa — as 4 opções ficam iguais nesse quesito, então não existe "par" que se destaque e aponte qual é a certa sem calcular (era exatamente esse o furo da primeira versão: só 2 das 4 batiam, e a certa estava sempre no par — dava pra achar o par e já cair de 4 pra 2 chances, sem contas).
 
-Sem isso dava pra eliminar alternativas só olhando o último dígito, sem calcular nada. Prioriza candidatos de "erro plausível" que já batem essa unidade por coincidência; só completa com `correto ± múltiplo de 10` quando falta. No Desafiador, o resto do preenchimento (pool de erro plausível + genérico) é impedido de bater essa unidade por acidente — garante exatamente 2, nunca 3 por coincidência. Em modos não-inteiros (`basic-*`, Tabuada), nunca deixa esse `±10k` cair em número negativo — troca de direção quando um lado ficaria negativo. Implementado em `sameUnitsDigitDistractors()` + `genericDistractors(..., avoidUnitsDigit)`, dentro do próprio `pickOptions()`.
+Além da unidade, os distratores também priorizam bater a **dezena** — e a **centena**, quando o número é grande o suficiente. Sem isso, cada opção caía numa dezena diferente e dava pra "estimar a faixa" (ex: "é uns 170 e poucos") e acertar sem calcular o valor exato. Exemplo real que motivou a correção: `10 × 647 = 6470` tinha opções `6480, 6460, 7470, 6470` (dezenas `8, 6, 7, 7` — misturadas); agora ficam `5470, 8470, 7470, 6470` (dezenas `7, 7, 7, 7` — todas iguais).
+
+Ordem de prioridade ao montar as 3 erradas:
+1. Candidato de "erro plausível" que já bate dezena + unidade por coincidência
+2. `correto ± múltiplo de 1000` ou `± múltiplo de 100` (preserva dezena + unidade, às vezes centena)
+3. Candidato de "erro plausível" que bate só a unidade (só entra se sobrar vaga depois dos passos acima)
+4. `correto ± múltiplo de 10` (preserva só a unidade — fallback pra números pequenos)
+
+Em modos não-inteiros (`basic-*`, Tabuada), nenhum desses deslocamentos cai em número negativo — troca de direção quando um lado ficaria negativo. Implementado em `sameTensAndUnitsDistractors()` / `sameUnitsOnlyDistractors()` (ambas usam `offsetDistractors()`), dentro do próprio `pickOptions()` no `gameEngine.ts`.
 
 ### Regras do jogo
 
@@ -297,3 +301,4 @@ A Vercel detecta o push e faz o novo deploy automaticamente em ~1 minuto.
 *Atualizado em 07/08/2026 — v1.2: corrige o critério de nível da Tabuada — escala o multiplicador (1–10 / 11–100 / 101–999), não o produto, pra funcionar em qualquer tabuada escolhida*
 *Atualizado em 08/08/2026 — v1.3: mesmo algarismo da unidade (Desafiador = 2 das 4, Expert = as 4) e piso disjunto por nível em todos os 8 modos restantes (Adição, Subtração, Multiplicação, Divisão, os 4 de Inteiros) — nenhuma conta trivial de um nível mais fácil vaza pros mais difíceis*
 *Atualizado em 08/08/2026 — v1.4: Multiplicação — os dois fatores escalam juntos (6–20 / 21–50), corrigindo um fator pequeno (ex: `2 × 29`) que sobrava por o primeiro fator ainda ficar fixo em 2–15*
+*Atualizado em 08/08/2026 — v1.5: Desafiador passa a exigir as 3 erradas com a mesma unidade da certa (igual ao Expert, sem "par" que se destaque) e os distratores passam a priorizar bater a dezena — e a centena, quando dá — não só a unidade, pra impedir eliminar por estimativa grosseira*
