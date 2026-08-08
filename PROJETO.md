@@ -255,13 +255,13 @@ Salva e lê histórico no LocalStorage. Chave composta `modo__nível` (ou `modo_
 ### Para atualizar o app após mudanças
 
 ```bash
-cd "D:/1. PROJETOS/APPS/base-certa"
+cd "D:/1. PROJETOS/CLAUDE COWORK/APPS/base-certa"
 git add .
 git commit -m "descrição do que foi alterado"
 git push
 ```
 
-> A pasta mudou em 07/08/2026 (de `CLAUDE CODE/IMERSAO COM TATA/base-certa` para `APPS/base-certa`) — sem efeito no repo Git nem na Vercel.
+> A pasta mudou de local duas vezes, sem efeito no repo Git nem na Vercel: em 07/08/2026 (de `CLAUDE CODE/IMERSAO COM TATA/base-certa` para `1. PROJETOS/APPS/base-certa`) e em 08/08/2026 (de `1. PROJETOS/APPS/base-certa` para `1. PROJETOS/CLAUDE COWORK/APPS/base-certa`, pra ficar junto dos outros projetos ativos).
 >
 > Em 07/08/2026 o repositório também migrou de `casemiroya/base-certa` para `LeandroCasemiro/base-certa` (a conta antiga não tinha permissão de push) e o projeto na Vercel foi reconectado ao repositório novo via `vercel git connect`. Este parágrafo foi adicionado por um push de teste pra confirmar que o deploy automático continua funcionando após a migração.
 
