@@ -217,10 +217,14 @@ function getBasicSubRange(level: DifficultyLevel): Range & { minSubtrahend: numb
   return { min: 51, max: 100, minSubtrahend: 16 }
 }
 
+// Os dois fatores escalam juntos (diferente da Tabuada, onde o "número
+// escolhido" fica fixo de propósito) — sem isso, um fator pequeno (2, 3...)
+// deixava a conta trivial (dobrar/triplicar) mesmo com o outro fator grande,
+// ex: "2 × 29" no Expert.
 function getBasicMulRange(level: DifficultyLevel): { a: Range; b: Range } {
   if (level === 'beginner') return { a: { min: 2, max: 5 }, b: { min: 2, max: 5 } }
-  if (level === 'intermediate') return { a: { min: 2, max: 12 }, b: { min: 6, max: 20 } }
-  return { a: { min: 2, max: 15 }, b: { min: 21, max: 50 } }
+  if (level === 'intermediate') return { a: { min: 6, max: 20 }, b: { min: 6, max: 20 } }
+  return { a: { min: 21, max: 50 }, b: { min: 21, max: 50 } }
 }
 
 function getBasicDivRange(level: DifficultyLevel): { q: Range; d: Range } {

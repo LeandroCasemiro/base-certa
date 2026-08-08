@@ -75,12 +75,14 @@ O placar de melhor pontuação é isolado por variante (ex: "Tabuada do 7 · Fam
 |---|---|---|---|
 | Adição | 1–10 + 1–10 | 11–35 + 11–35 | 36–99 + 36–99 |
 | Subtração | 2–15, subtraendo 1+ | 16–50, subtraendo 6+ | 51–100, subtraendo 16+ |
-| Multiplicação | 2–5 × 2–5 | 2–12 × 6–20 | 2–15 × 21–50 |
+| Multiplicação | 2–5 × 2–5 | 6–20 × 6–20 | 21–50 × 21–50 |
 | Divisão | quoc. 1–5, div. 2–5 | quoc. 6–15, div. 6–10 | quoc. 16–30, div. 11–20 |
 | Tabuada | número × 1–10 | número × 11–100 | número × 101–999 |
 | Inteiros (+/−, ×/÷) | magnitude 1–5 | magnitude 6–15 | magnitude 16–30 |
 
 > **Correção 08/08/2026 — o piso agora sobe junto com o teto.** Até essa data, os ranges só cresciam o teto por nível — o piso ficava sempre igual (ex: Multiplicação sempre permitia `2×2` até `2×5`, em qualquer nível), porque cada faixa de nível era um superconjunto da anterior. Isso deixava fatos triviais (ex: `6×5` no Expert) vazarem pros níveis mais difíceis, o mesmo defeito que a Tabuada teve. Agora, em todo modo, o piso de um nível fica estritamente acima do teto do nível anterior — nenhuma conta reconhecível de um nível mais fácil pode sortear num nível mais difícil. Inteiros deixou de ser um range simétrico `-R..R` (que sempre continha valores pequenos como ±1) e passou a sortear por banda de magnitude com sinal aleatório (`randIntBand`), do mesmo jeito.
+>
+> **Correção 08/08/2026 (2ª rodada) — Multiplicação precisa dos DOIS fatores escalando juntos.** A primeira correção fixou só o segundo fator (`b`) da Multiplicação, deixando o primeiro (`a`) preso em 2–15 em todo nível — então um fator pequeno (`2`, `3`...) ainda deixava a conta trivial (dobrar/triplicar) mesmo com o outro fator grande, ex: `2 × 29` no Expert. Diferente da Tabuada — onde manter o "número escolhido" fixo é proposital, é o ponto do modo — a Multiplicação não tem esse conceito, então os dois fatores agora escalam juntos pela mesma banda (6–20 no Desafiador, 21–50 no Expert), igual à Adição. Os 4 modos de Inteiros já escalavam os dois operandos juntos desde a correção anterior (usam a mesma `getIntMagnitudeRange` pros dois lados) — não precisaram de ajuste.
 >
 > (Correção anterior, 07/08/2026: esta tabela dizia ±15 no Expert de Inteiros ×/÷, mas o código sempre usou a mesma faixa dos outros 3 modos de inteiros — a tabela estava desatualizada, não o código.)
 
@@ -294,3 +296,4 @@ A Vercel detecta o push e faz o novo deploy automaticamente em ~1 minuto.
 *Atualizado em 07/08/2026 — v1.1: seleção de tabuada específica, família de operações (+, −, ×, ÷) focada em um número, e alternativas erradas com dificuldade progressiva por nível*
 *Atualizado em 07/08/2026 — v1.2: corrige o critério de nível da Tabuada — escala o multiplicador (1–10 / 11–100 / 101–999), não o produto, pra funcionar em qualquer tabuada escolhida*
 *Atualizado em 08/08/2026 — v1.3: mesmo algarismo da unidade (Desafiador = 2 das 4, Expert = as 4) e piso disjunto por nível em todos os 8 modos restantes (Adição, Subtração, Multiplicação, Divisão, os 4 de Inteiros) — nenhuma conta trivial de um nível mais fácil vaza pros mais difíceis*
+*Atualizado em 08/08/2026 — v1.4: Multiplicação — os dois fatores escalam juntos (6–20 / 21–50), corrigindo um fator pequeno (ex: `2 × 29`) que sobrava por o primeiro fator ainda ficar fixo em 2–15*
