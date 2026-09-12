@@ -30,7 +30,7 @@ export const QUESTIONS_PER_ROUND = 10
 // visível pra quem abrir o código-fonte no navegador. É só uma fricção
 // honesta pra não deixar o link se espalhar sozinho (mesma lógica de um
 // código na bio do Instagram).
-export const ACCESS_PASSWORD = 'tododiaeuaprendo'
+export const ACCESS_PASSWORD = 'euaprendotododia'
 
 export const TABUADA_NUMBERS = Array.from({ length: 12 }, (_, i) => i + 1)
 
