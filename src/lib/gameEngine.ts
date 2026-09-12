@@ -35,6 +35,19 @@ function dedupExcluding(candidates: number[], exclude: number): number[] {
   return Array.from(set)
 }
 
+function digitCount(n: number): number {
+  return Math.abs(n).toString().length
+}
+
+// Todo distrator precisa ter a MESMA quantidade de casas da resposta certa —
+// sem isso, um "correto + 1000" pode virar a única opção com 1 dígito a mais
+// (ex: certa = 880, distrator = 1880), e dá pra acertar só olhando o tamanho
+// do número, sem fazer a conta. Bug real: expert (40×22=880 vs 1880/2880/3880)
+// e desafiador (16×10=160 vs 1160/2160/3160).
+function sameDigits(correct: number, candidate: number): boolean {
+  return digitCount(candidate) === digitCount(correct)
+}
+
 // Fills up to `needed` distinct wrong-answer values around `correct`, avoiding
 // anything already in `avoid`. Used to top off whatever the confusable pool
 // (plausible-mistake candidates) didn't cover.
@@ -46,7 +59,7 @@ function genericDistractors(correct: number, spread: number, needed: number, avo
     attempts++
     const offset = randIntExcluding(-spread, spread, [0])
     const candidate = correct + offset
-    if (!avoid.has(candidate)) found.add(candidate)
+    if (!avoid.has(candidate) && sameDigits(correct, candidate)) found.add(candidate)
   }
 
   let step = 1
@@ -54,7 +67,7 @@ function genericDistractors(correct: number, spread: number, needed: number, avo
     for (const sign of [1, -1]) {
       if (found.size >= needed) break
       const candidate = correct + sign * step
-      if (!avoid.has(candidate)) found.add(candidate)
+      if (!avoid.has(candidate) && sameDigits(correct, candidate)) found.add(candidate)
     }
     step++
   }
@@ -78,6 +91,7 @@ function offsetDistractors(
         if (candidate === correct) continue
         if (!allowNegative && candidate < 0) continue
         if (avoid.has(candidate)) continue
+        if (!sameDigits(correct, candidate)) continue
         found.push(candidate)
         avoid.add(candidate)
       }
@@ -141,7 +155,7 @@ function pickOptions(
     // misturasse com o passo 2, um candidato do pool que bate só a unidade
     // podia ocupar a vaga de um candidato mecânico mais forte (que bate
     // dezena também), enfraquecendo à toa.
-    for (const c of pool.filter((c) => Math.abs(c % 100) === correctTens)) {
+    for (const c of pool.filter((c) => Math.abs(c % 100) === correctTens && sameDigits(correct, c))) {
       if (wrong.length >= 3) break
       if (avoid.has(c)) continue
       wrong.push(c)
@@ -154,7 +168,7 @@ function pickOptions(
     // 2) Só se ainda faltar (números pequenos, pouca margem pra dezena
     // diferente), cai pra bater só a unidade — pool primeiro, depois mecânico.
     if (wrong.length < 3) {
-      for (const c of pool.filter((c) => !avoid.has(c) && Math.abs(c % 10) === correctDigit)) {
+      for (const c of pool.filter((c) => !avoid.has(c) && Math.abs(c % 10) === correctDigit && sameDigits(correct, c))) {
         if (wrong.length >= 3) break
         wrong.push(c)
         avoid.add(c)
@@ -165,7 +179,7 @@ function pickOptions(
     }
   }
 
-  const deduped = dedupExcluding(confusable, correct).filter((c) => !avoid.has(c))
+  const deduped = dedupExcluding(confusable, correct).filter((c) => !avoid.has(c) && sameDigits(correct, c))
   for (const c of deduped) {
     if (wrong.length >= confusableCount) break
     wrong.push(c)
