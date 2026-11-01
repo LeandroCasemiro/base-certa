@@ -15,8 +15,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Base Certa",
-  description: "Pratique matemática de forma leve e rápida — uma ferramenta Pai MOVIDO",
+  title: "Aprenda a Tabuada",
+  description: "O básico da matemática bem feito. Uma ferramenta Pai MOVIDO.",
 };
 
 export default function RootLayout({
@@ -26,7 +26,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="pt-BR"
       className={`${montserrat.variable} ${inter.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-body bg-bg text-ink">{children}</body>

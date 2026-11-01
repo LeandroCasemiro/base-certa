@@ -1,8 +1,9 @@
 'use client'
 
 import { DifficultyLevel, GameMode } from '@/lib/types'
-import { getBestScore } from '@/lib/storage'
-import { DIFFICULTY_LEVELS, MODE_GROUPS, QUESTIONS_PER_ROUND } from '@/lib/constants'
+import { getPreviousBest } from '@/lib/storage'
+import { QUESTIONS_PER_ROUND } from '@/lib/constants'
+import { getRoundLabel } from '@/lib/labels'
 import { useEffect, useState } from 'react'
 
 interface ResultScreenProps {
@@ -13,18 +14,6 @@ interface ResultScreenProps {
   onHome: () => void
   titleOverride?: string
   variant?: string
-}
-
-function getModeName(mode: GameMode): string {
-  for (const group of MODE_GROUPS) {
-    const found = group.modes.find((m) => m.id === mode)
-    if (found) return found.label
-  }
-  return mode
-}
-
-function getLevelLabel(level: DifficultyLevel): string {
-  return DIFFICULTY_LEVELS.find((l) => l.id === level)?.label ?? level
 }
 
 function getEncouragementMessage(score: number): string {
@@ -38,66 +27,62 @@ function getEncouragementMessage(score: number): string {
 export default function ResultScreen({ mode, level, score, onPlayAgain, onHome, titleOverride, variant }: ResultScreenProps) {
   const errors = QUESTIONS_PER_ROUND - score
   const message = getEncouragementMessage(score)
-  const [bestScore, setBestScore] = useState<number | null>(null)
+  const [previousBest, setPreviousBest] = useState<number | null>(null)
+  const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
-    setBestScore(getBestScore(mode, level, variant))
+    setPreviousBest(getPreviousBest(mode, level, variant))
+    setLoaded(true)
   }, [mode, level, variant])
 
-  const isNewBest = bestScore !== null && score >= bestScore
+  const isNewBest = previousBest !== null && score > previousBest
 
   return (
-    <div className="min-h-screen bg-bg flex flex-col items-center px-4 py-10">
-      <div className="w-full max-w-md flex flex-col gap-6">
-        <div className="text-center">
-          <h1 className="text-2xl font-heading font-black text-ink mb-1">Resultado</h1>
-          <p className="text-sm text-muted">
-            {titleOverride ?? getModeName(mode)} · {getLevelLabel(level)}
-          </p>
-        </div>
+    <div className="min-h-screen bg-bg flex flex-col items-center px-5 pt-6 pb-8">
+      <div className="w-full max-w-md flex flex-col flex-1">
+        <p className="text-sm text-soft">{getRoundLabel(mode, level, titleOverride)}</p>
 
-        {/* Score card */}
-        <div className="bg-white rounded-xl border-2 border-border p-8 text-center flex flex-col gap-2">
-          <span className="text-6xl font-heading font-black text-primary">
-            {score}/{QUESTIONS_PER_ROUND}
-          </span>
-          <p className="text-soft text-sm font-medium">{message}</p>
+        <div className="flex flex-col items-center mt-8">
           {isNewBest && (
-            <span className="text-xs font-bold text-success uppercase tracking-wider mt-1">
-              Novo recorde neste nível!
+            <span className="anim-pop bg-gold text-ink rounded-full px-4 py-1.5 text-sm font-bold mb-4">
+              Novo recorde
             </span>
+          )}
+          <p className="font-heading font-black text-ink leading-none">
+            <span className="text-8xl">{score}</span>
+            <span className="text-4xl text-muted">/{QUESTIONS_PER_ROUND}</span>
+          </p>
+          <p className="mt-4 text-lg font-semibold text-ink text-center">{message}</p>
+          {loaded && previousBest !== null && (
+            <p className="mt-1 text-sm text-soft text-center">
+              {isNewBest
+                ? `Seu melhor neste nível era ${previousBest}.`
+                : `Seu melhor neste nível: ${previousBest}/${QUESTIONS_PER_ROUND}.`}
+            </p>
           )}
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-success/10 border-2 border-success/30 rounded-xl p-4 text-center">
-            <p className="text-2xl font-heading font-black text-success">{score}</p>
-            <p className="text-xs text-success font-medium mt-1">Acertos</p>
+        <div className="grid grid-cols-2 gap-3 mt-8">
+          <div className="bg-success-bg rounded-xl p-4 text-center">
+            <p className="text-3xl font-heading font-black text-success">{score}</p>
+            <p className="text-sm text-success font-semibold mt-1">Acertos</p>
           </div>
-          <div className="bg-error/10 border-2 border-error/30 rounded-xl p-4 text-center">
-            <p className="text-2xl font-heading font-black text-error">{errors}</p>
-            <p className="text-xs text-error font-medium mt-1">Erros</p>
+          <div className="bg-error-bg rounded-xl p-4 text-center">
+            <p className="text-3xl font-heading font-black text-error">{errors}</p>
+            <p className="text-sm text-error font-semibold mt-1">Erros</p>
           </div>
         </div>
 
-        {bestScore !== null && !isNewBest && (
-          <p className="text-center text-xs text-muted">
-            Seu melhor neste nível: <span className="font-bold">{bestScore}/10</span>
-          </p>
-        )}
-
-        {/* Actions */}
-        <div className="flex flex-col gap-3 mt-2">
+        <div className="mt-auto pt-8 flex flex-col gap-3">
           <button
             onClick={onPlayAgain}
-            className="w-full py-4 rounded-xl bg-primary text-white font-bold text-base hover:bg-primary-hover active:scale-95 transition-all"
+            className="w-full h-14 rounded-xl bg-ink text-bg font-bold text-base hover:opacity-90 active:scale-[0.98] transition-all"
           >
             Jogar novamente
           </button>
           <button
             onClick={onHome}
-            className="w-full py-4 rounded-xl bg-white border-2 border-border text-soft font-bold text-base hover:border-border-strong active:scale-95 transition-all"
+            className="w-full h-14 rounded-xl border-2 border-ink text-ink font-bold text-base hover:bg-paper-dark active:scale-[0.98] transition-all"
           >
             Voltar ao início
           </button>

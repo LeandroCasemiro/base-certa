@@ -6,6 +6,8 @@ import { generateSession } from '@/lib/gameEngine'
 import { saveResult, tabuadaVariantKey } from '@/lib/storage'
 import { QUESTIONS_PER_ROUND } from '@/lib/constants'
 
+export type AnswerResult = 'correct' | 'wrong'
+
 export function useGameSession() {
   const [mode, setMode] = useState<GameMode | null>(null)
   const [level, setLevel] = useState<DifficultyLevel | null>(null)
@@ -15,6 +17,10 @@ export function useGameSession() {
   const [feedback, setFeedback] = useState<FeedbackState>('idle')
   const [score, setScore] = useState(0)
   const [finished, setFinished] = useState(false)
+  // Acerto ou erro de cada pergunta já respondida (para a barra de progresso)
+  const [results, setResults] = useState<AnswerResult[]>([])
+  // Acertos seguidos na rodada atual
+  const [streak, setStreak] = useState(0)
 
   const scoreRef = useRef(0)
   const modeRef = useRef<GameMode | null>(null)
@@ -35,6 +41,8 @@ export function useGameSession() {
     setFeedback('idle')
     setScore(0)
     setFinished(false)
+    setResults([])
+    setStreak(0)
   }, [])
 
   const selectOption = useCallback(
@@ -44,6 +52,8 @@ export function useGameSession() {
       const isCorrect = value === correct
       setSelectedOption(value)
       setFeedback(isCorrect ? 'correct' : 'wrong')
+      setResults((r) => [...r, isCorrect ? 'correct' : 'wrong'])
+      setStreak((s) => (isCorrect ? s + 1 : 0))
       if (isCorrect) {
         scoreRef.current += 1
         setScore(scoreRef.current)
@@ -77,6 +87,8 @@ export function useGameSession() {
     setFeedback('idle')
     setScore(0)
     setFinished(false)
+    setResults([])
+    setStreak(0)
   }, [])
 
   return {
@@ -88,6 +100,8 @@ export function useGameSession() {
     feedback,
     score,
     finished,
+    results,
+    streak,
     currentQuestion: questions[currentIndex] ?? null,
     startGame,
     selectOption,

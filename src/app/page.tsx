@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react'
 import { DifficultyLevel, GameMode, TabuadaConfig } from '@/lib/types'
 import { isUnlocked, tabuadaVariantKey } from '@/lib/storage'
 import { useGameSession } from '@/hooks/useGameSession'
+import { getRoundLabel } from '@/lib/labels'
 import HomeScreen from '@/components/HomeScreen'
-import PasswordGate from '@/components/PasswordGate'
+import QuizGate from '@/components/QuizGate'
 import TabuadaSetupScreen from '@/components/TabuadaSetupScreen'
 import DifficultyScreen from '@/components/DifficultyScreen'
 import GameScreen from '@/components/GameScreen'
@@ -34,6 +35,8 @@ export default function Page() {
     currentIndex,
     score,
     feedback,
+    results,
+    streak,
     selectedOption,
     finished,
     currentQuestion,
@@ -85,7 +88,7 @@ export default function Page() {
   if (unlocked === null) return null
 
   if (!unlocked) {
-    return <PasswordGate onUnlock={() => setUnlockedState(true)} />
+    return <QuizGate onUnlock={() => setUnlockedState(true)} />
   }
 
   // Transition to result when game finishes
@@ -128,9 +131,11 @@ export default function Page() {
       <GameScreen
         question={currentQuestion}
         currentIndex={currentIndex}
-        score={score}
         feedback={feedback}
         selectedOption={selectedOption}
+        results={results}
+        streak={streak}
+        roundLabel={getRoundLabel(mode!, level!, mode === 'tabuada' ? tabuadaLabel : undefined)}
         onSelect={selectOption}
         onNext={nextQuestion}
         onHome={handleHome}

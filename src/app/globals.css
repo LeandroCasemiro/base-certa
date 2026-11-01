@@ -1,23 +1,34 @@
 @import "tailwindcss";
 
+/* Paleta do app Aprenda a Tabuada (antigo Base Certa) — creme e preto. Registrada no design system do Pai MOVIDO
+   (D:\1. PROJETOS\CLAUDE DESIGN\DESIGN.md, seção "Aprenda a Tabuada", versão 1.2.0, 2026-11-01).
+   Cada cor tem um papel só:
+   - azul claro (secondary / bg-d) = "onde você está" (pergunta atual, opção marcada)
+   - verde = acerto · terracota = erro · dourado = conquista (usar pouco)
+   - cores dos pilares = ícone de cada operação */
 @theme {
-  --color-primary: #013c6a;
-  --color-primary-hover: #002548;
-  --color-secondary: #89bad6;
-  --color-bg: #f3f4f6;
-  --color-bg-dark: #eaecef;
-  --color-bg-f: #f8fbfe;
-  --color-bg-e: #f3f8fd;
-  --color-bg-d: #eef5fb;
-  --color-header: #0a1628;
-  --color-ink: #0b0c0e;
+  /* já existiam no design system */
+  --color-bg: #fbf7ec;          /* paper */
+  --color-ink: #0b0c0e;         /* text */
   --color-soft: #4a5568;
   --color-muted: #7a8390;
-  --color-border: #c2d4e0;
-  --color-border-strong: #b8c5d9;
-  --color-success: #22c55e;
-  --color-warning: #f59e0b;
-  --color-error: #ef4444;
+  --color-primary: #013c6a;
+  --color-secondary: #89bad6;
+  --color-bg-d: #eef5fb;
+  --color-gold: #c9a84c;        /* tom claro do pilar Visão de Mundo */
+  --color-op-add: #1a6b58;      /* pilar Organização */
+  --color-op-sub: #3f4756;      /* pilar Disciplina */
+  --color-op-mul: #013c6a;      /* pilar Mente */
+  --color-op-div: #8b6914;      /* pilar Visão de Mundo */
+
+  /* novas, só deste app */
+  --color-card: #fffcf4;        /* paper-light */
+  --color-paper-dark: #f1eada;
+  --color-line: #e4dac4;        /* paper-border */
+  --color-success: #2f7a4e;     /* success-soft */
+  --color-success-bg: #e3f0e2;
+  --color-error: #b4523a;       /* error-soft */
+  --color-error-bg: #f6e3da;
 
   --font-heading: var(--font-montserrat);
   --font-body: var(--font-inter);
@@ -32,4 +43,22 @@ body {
   background: var(--color-bg);
   color: var(--color-ink);
   font-family: var(--font-body);
+}
+
+@keyframes pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.anim-pop { animation: pop 0.28s ease-out; }
+.anim-rise { animation: rise 0.25s ease-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-pop, .anim-rise { animation: none; }
 }

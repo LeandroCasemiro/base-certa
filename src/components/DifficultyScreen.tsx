@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import { DifficultyLevel, GameMode } from '@/lib/types'
-import { DIFFICULTY_LEVELS, MODE_GROUPS } from '@/lib/constants'
+import { DIFFICULTY_LEVELS, QUESTIONS_PER_ROUND } from '@/lib/constants'
 import { getBestScore } from '@/lib/storage'
-import { QUESTIONS_PER_ROUND } from '@/lib/constants'
+import { getGroupName, getModeName } from '@/lib/labels'
 
 interface DifficultyScreenProps {
   mode: GameMode
@@ -14,34 +14,11 @@ interface DifficultyScreenProps {
   variant?: string
 }
 
-function getModeName(mode: GameMode): string {
-  for (const group of MODE_GROUPS) {
-    const found = group.modes.find((m) => m.id === mode)
-    if (found) return found.label
-  }
-  return mode
-}
-
-function getGroupName(mode: GameMode): string {
-  for (const group of MODE_GROUPS) {
-    if (group.modes.find((m) => m.id === mode)) return group.label
-  }
-  return ''
-}
-
-const colorMap: Record<string, { card: string; badge: string }> = {
-  green: {
-    card: 'border-border hover:border-success hover:bg-bg-d',
-    badge: 'bg-success/10 text-success',
-  },
-  blue: {
-    card: 'border-border hover:border-primary hover:bg-bg-d',
-    badge: 'bg-primary/10 text-primary',
-  },
-  navy: {
-    card: 'border-border hover:border-header hover:bg-bg-d',
-    badge: 'bg-header/10 text-header',
-  },
+// Etiqueta de cada nível: do mais leve ao mais pesado
+const LEVEL_BADGE: Record<string, string> = {
+  green: 'bg-success-bg text-success',
+  blue: 'bg-bg-d text-primary',
+  navy: 'bg-ink text-bg',
 }
 
 export default function DifficultyScreen({ mode, onSelectLevel, onBack, titleOverride, variant }: DifficultyScreenProps) {
@@ -60,26 +37,20 @@ export default function DifficultyScreen({ mode, onSelectLevel, onBack, titleOve
   }, [mode, variant])
 
   return (
-    <div className="min-h-screen bg-bg flex flex-col items-center px-4 py-8">
+    <div className="min-h-screen bg-bg flex flex-col items-center px-5 pt-6 pb-8">
       <div className="w-full max-w-md flex flex-col gap-6">
-        {/* Header */}
         <div>
-          <button
-            onClick={onBack}
-            className="text-muted hover:text-soft text-sm font-medium transition-colors mb-4 block"
-          >
+          <button onClick={onBack} className="text-soft hover:text-ink text-sm font-medium transition-colors mb-5 block">
             ← Voltar
           </button>
-          <h1 className="text-2xl font-heading font-black text-ink">{titleOverride ?? getModeName(mode)}</h1>
-          <p className="text-sm text-muted mt-1">
-            {titleOverride ? 'Escolha o nível' : `${getGroupName(mode)} — Escolha o nível`}
+          <h1 className="text-3xl font-heading font-black text-ink tracking-tight">{titleOverride ?? getModeName(mode)}</h1>
+          <p className="text-sm text-soft mt-1">
+            {titleOverride ? 'Escolha o nível' : `${getGroupName(mode)} · Escolha o nível`}
           </p>
         </div>
 
-        {/* Level cards */}
         <div className="flex flex-col gap-3">
           {DIFFICULTY_LEVELS.map((lvl) => {
-            const colors = colorMap[lvl.color]
             const best = bestScores[lvl.id]
             const isPerfect = best === QUESTIONS_PER_ROUND
 
@@ -87,23 +58,21 @@ export default function DifficultyScreen({ mode, onSelectLevel, onBack, titleOve
               <button
                 key={lvl.id}
                 onClick={() => onSelectLevel(lvl.id)}
-                className={`w-full bg-white border-2 rounded-xl px-5 py-5 flex items-center justify-between transition-all active:scale-95 ${colors.card}`}
+                className="w-full bg-card border-2 border-line rounded-xl px-5 py-5 flex items-center justify-between text-left transition-all hover:border-ink active:scale-[0.98]"
               >
-                <div className="flex items-center gap-4">
-                  <span className={`text-xs font-bold px-3 py-1 rounded-full ${colors.badge}`}>
-                    {lvl.label}
-                  </span>
+                <div className="flex flex-col items-start gap-2">
+                  <span className={`text-xs font-bold px-3 py-1 rounded-full ${LEVEL_BADGE[lvl.color]}`}>{lvl.label}</span>
                   <span className="text-sm text-soft">{lvl.description}</span>
                 </div>
                 <div className="text-right shrink-0 ml-3">
                   {best !== null ? (
                     <div className="flex flex-col items-end">
-                      <span className={`text-sm font-bold ${isPerfect ? 'text-success' : 'text-soft'}`}>
+                      <span className={`text-lg font-heading font-black ${isPerfect ? 'text-success' : 'text-ink'}`}>
                         {best}/{QUESTIONS_PER_ROUND}
                       </span>
-                      {isPerfect && (
-                        <span className="text-xs text-success font-medium">Perfeito!</span>
-                      )}
+                      <span className={`text-xs font-medium ${isPerfect ? 'text-success' : 'text-muted'}`}>
+                        {isPerfect ? 'Perfeito' : 'seu melhor'}
+                      </span>
                     </div>
                   ) : (
                     <span className="text-xs text-muted">Novo</span>

@@ -26,11 +26,18 @@ export const MODE_GROUPS: ModeGroup[] = [
 
 export const QUESTIONS_PER_ROUND = 10
 
-// Não é segurança de verdade — o app não tem servidor, então isso fica
-// visível pra quem abrir o código-fonte no navegador. É só uma fricção
-// honesta pra não deixar o link se espalhar sozinho (mesma lógica de um
-// código na bio do Instagram).
-export const ACCESS_PASSWORD = 'euaprendotododia'
+// ---- Quiz de entrada (substituiu a senha em 01/11/2026) ----
+
+// WhatsApp Business "Pai MOVIDO". O botão no fim do quiz só aparece quando
+// WHATSAPP_VIDEO_ENABLED = true. Ligar depois que o Vídeo 1 estiver gravado
+// (ver PLANEJAMENTO/03-VIDEOS-WHATSAPP.txt).
+export const WHATSAPP_NUMBER = '5522992225709'
+export const WHATSAPP_VIDEO_ENABLED = false
+export const WHATSAPP_MESSAGE = 'Oi Leandro, vim pelo app da tabuada e quero o vídeo.'
+
+export const DIAGNOSTICO_URL = 'https://www.paimovido.com.br/diagnostico'
+export const INSTAGRAM_URL = 'https://www.instagram.com/euleandrocasemiro/'
+export const PRIVACY_URL = 'https://www.paimovido.com.br/politica-de-privacidade'
 
 export const TABUADA_NUMBERS = Array.from({ length: 12 }, (_, i) => i + 1)
 

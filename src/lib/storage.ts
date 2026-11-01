@@ -48,6 +48,17 @@ export function loadHistory(): HistoryEntry[] {
   }
 }
 
+// Melhor resultado ANTES da rodada que acabou de ser salva (a mais recente do histórico).
+// Serve para a tela de resultado dizer "Novo recorde" só quando a pessoa realmente superou
+// o próprio melhor. Retorna null na primeira rodada daquele modo e nível.
+export function getPreviousBest(mode: GameMode, level: DifficultyLevel, variant?: string): number | null {
+  const key = makeKey(mode, level, variant)
+  const history = loadHistory().filter((e) => makeKey(e.mode, e.level, e.variant) === key)
+  const previous = history.slice(1)
+  if (previous.length === 0) return null
+  return Math.max(...previous.map((e) => e.score))
+}
+
 export function getBestScore(mode: GameMode, level: DifficultyLevel, variant?: string): number | null {
   const key = makeKey(mode, level, variant)
   const history = loadHistory().filter((e) => makeKey(e.mode, e.level, e.variant) === key)

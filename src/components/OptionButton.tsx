@@ -17,39 +17,27 @@ export default function OptionButton({
 }: OptionButtonProps) {
   const isDisabled = feedback !== 'idle'
 
+  const size = String(value).length > 5 ? 'text-2xl' : 'text-3xl'
   let className =
-    'w-full py-4 px-6 rounded-xl text-lg font-semibold border-2 transition-all duration-200 text-left '
+    `w-full h-20 rounded-xl border-2 font-heading font-black ${size} flex items-center justify-center gap-2 transition-all duration-200 `
+  let mark = ''
 
   if (feedback === 'idle') {
-    className += 'bg-white border-border hover:border-primary hover:bg-bg-d cursor-pointer active:scale-95'
-  } else if (isSelected && feedback === 'correct') {
-    className += 'bg-success border-success text-white'
+    className += 'bg-card border-line text-ink hover:border-ink cursor-pointer active:scale-95'
+  } else if (isCorrect && (isSelected || feedback === 'wrong')) {
+    className += 'bg-success-bg border-success text-success'
+    mark = '✓'
+    if (isSelected) className += ' anim-pop'
   } else if (isSelected && feedback === 'wrong') {
-    className += 'bg-error border-error text-white'
-  } else if (!isSelected && isCorrect && feedback === 'wrong') {
-    className += 'bg-success border-success text-white'
+    className += 'bg-error-bg border-error text-error'
   } else {
-    className += 'bg-white border-border opacity-40 cursor-not-allowed'
+    className += 'bg-card border-line text-ink opacity-40 cursor-default'
   }
 
   return (
-    <button
-      className={className}
-      onClick={() => !isDisabled && onClick(value)}
-      disabled={isDisabled && !isSelected && !isCorrect}
-    >
-      <span className="flex items-center justify-between">
-        <span>{value}</span>
-        {feedback !== 'idle' && isSelected && feedback === 'correct' && (
-          <span className="text-white font-bold">✓</span>
-        )}
-        {feedback !== 'idle' && isSelected && feedback === 'wrong' && (
-          <span className="text-white font-bold">✗</span>
-        )}
-        {feedback === 'wrong' && !isSelected && isCorrect && (
-          <span className="text-white font-bold">✓</span>
-        )}
-      </span>
+    <button className={className} onClick={() => !isDisabled && onClick(value)} disabled={isDisabled}>
+      <span>{value}</span>
+      {mark && <span className="text-2xl">{mark}</span>}
     </button>
   )
 }
