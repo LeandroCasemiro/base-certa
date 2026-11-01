@@ -1,4 +1,5 @@
 import { DifficultyLevel, GameMode, Question, TabuadaConfig } from './types'
+import { armarAdicao, armarSubtracao, armarMultiplicacao, armarDivisao } from './contaArmada'
 import { QUESTIONS_PER_ROUND } from './constants'
 
 function randInt(min: number, max: number): number {
@@ -308,6 +309,16 @@ function explainIntAdd(a: number, b: number, correct: number): string {
   return `Sinais diferentes: ${Math.abs(bigger)} − ${Math.abs(smaller)} = ${Math.abs(correct)}, sinal do maior valor (${sign}) = ${correct}.`
 }
 
+// Inteiros: a conta armada é feita com os valores sem sinal. Sinais iguais
+// somam; sinais diferentes subtraem o menor do maior (o sinal vem na frase).
+function armarSomaComSinais(a: number, b: number) {
+  const x = Math.abs(a)
+  const y = Math.abs(b)
+  const sameSign = (a >= 0) === (b >= 0)
+  if (sameSign) return armarAdicao(x, y)
+  return armarSubtracao(Math.max(x, y), Math.min(x, y))
+}
+
 function explainIntMul(a: number, b: number, correct: number): string {
   const sameSign = (a > 0 && b > 0) || (a < 0 && b < 0)
   if (sameSign)
@@ -329,6 +340,7 @@ function generateQuestion(mode: GameMode, level: DifficultyLevel): Question {
         correct,
         options: pickOptions(correct, buildAddConfusable(a, b, correct), getSpread(level, correct), confusableCount, false),
         explanation: `Some ${a} com ${b}: ${a} + ${b} = ${correct}.`,
+        armada: armarAdicao(a, b),
       }
     }
     case 'basic-sub': {
@@ -341,6 +353,7 @@ function generateQuestion(mode: GameMode, level: DifficultyLevel): Question {
         correct,
         options: pickOptions(correct, buildSubConfusable(a, b, correct), getSpread(level, correct), confusableCount, false),
         explanation: `Retire ${b} de ${a}: ${a} − ${b} = ${correct}.`,
+        armada: armarSubtracao(a, b),
       }
     }
     case 'basic-mul': {
@@ -353,6 +366,7 @@ function generateQuestion(mode: GameMode, level: DifficultyLevel): Question {
         correct,
         options: pickOptions(correct, buildMulConfusable(a, b, correct), getSpread(level, correct), confusableCount, false),
         explanation: `${a} grupos de ${b}: ${a} × ${b} = ${correct}. Lembre: ${b} × ${a} também vale ${correct}.`,
+        armada: armarMultiplicacao(a, b),
       }
     }
     case 'basic-div': {
@@ -365,6 +379,7 @@ function generateQuestion(mode: GameMode, level: DifficultyLevel): Question {
         correct: quociente,
         options: pickOptions(quociente, buildDivConfusable(quociente), getSpread(level, quociente), confusableCount, false),
         explanation: `${divisor} × ${quociente} = ${dividendo}, então ${dividendo} ÷ ${divisor} = ${quociente}.`,
+        armada: armarDivisao(dividendo, divisor),
       }
     }
     case 'tabuada': {
@@ -377,6 +392,7 @@ function generateQuestion(mode: GameMode, level: DifficultyLevel): Question {
         correct,
         options: pickOptions(correct, buildMulConfusable(a, b, correct), getSpread(level, correct), confusableCount, false),
         explanation: `Tabuada do ${a}: ${a} × ${b} = ${correct}. Grave este resultado.`,
+        armada: armarMultiplicacao(a, b),
       }
     }
     case 'int-add': {
@@ -395,6 +411,7 @@ function generateQuestion(mode: GameMode, level: DifficultyLevel): Question {
           true
         ),
         explanation: explainIntAdd(a, b, correct),
+        armada: armarSomaComSinais(a, b),
       }
     }
     case 'int-sub': {
@@ -414,6 +431,7 @@ function generateQuestion(mode: GameMode, level: DifficultyLevel): Question {
           true
         ),
         explanation: `Subtrair ${formatNumber(b)} é somar ${formatNumber(negB)}: ${formatNumber(a)} + ${formatNumber(negB)} = ${correct}.`,
+        armada: armarSomaComSinais(a, negB),
       }
     }
     case 'int-mul': {
@@ -432,6 +450,7 @@ function generateQuestion(mode: GameMode, level: DifficultyLevel): Question {
           true
         ),
         explanation: explainIntMul(a, b, correct),
+        armada: armarMultiplicacao(Math.abs(a), Math.abs(b)),
       }
     }
     case 'int-div': {
@@ -452,6 +471,7 @@ function generateQuestion(mode: GameMode, level: DifficultyLevel): Question {
           true
         ),
         explanation: `${signRule} ${formatNumber(divisor)} × ${quociente} = ${dividendo}, então o resultado é ${quociente}.`,
+        armada: armarDivisao(Math.abs(dividendo), Math.abs(divisor)),
       }
     }
   }
@@ -482,6 +502,7 @@ function generateFocusedTabuadaQuestion(n: number, level: DifficultyLevel, famil
         correct: sum,
         options: pickOptions(sum, buildAddConfusable(n, b, sum), getSpread(level, sum), confusableCount, false),
         explanation: `Isso vem da tabuada do ${n}: ${n} × ${b} = ${product}. Aqui é a soma relacionada: ${n} + ${b} = ${sum}.`,
+        armada: flip ? armarAdicao(b, n) : armarAdicao(n, b),
       }
     }
     case 'sub': {
@@ -493,6 +514,7 @@ function generateFocusedTabuadaQuestion(n: number, level: DifficultyLevel, famil
         correct,
         options: pickOptions(correct, buildSubConfusable(sum, subtracted, correct), getSpread(level, correct), confusableCount, false),
         explanation: `Isso vem da tabuada do ${n}: ${n} × ${b} = ${product}. Aqui é a subtração relacionada: ${sum} − ${subtracted} = ${correct}.`,
+        armada: armarSubtracao(sum, subtracted),
       }
     }
     case 'mul': {
@@ -502,6 +524,7 @@ function generateFocusedTabuadaQuestion(n: number, level: DifficultyLevel, famil
         correct: product,
         options: pickOptions(product, buildMulConfusable(n, b, product), getSpread(level, product), confusableCount, false),
         explanation: `Tabuada do ${n}: ${n} × ${b} = ${product}. Grave este resultado.`,
+        armada: armarMultiplicacao(n, b),
       }
     }
     case 'div': {
@@ -513,6 +536,7 @@ function generateFocusedTabuadaQuestion(n: number, level: DifficultyLevel, famil
         correct,
         options: pickOptions(correct, buildDivConfusable(correct), getSpread(level, correct), confusableCount, false),
         explanation: `Isso vem da tabuada do ${n}: ${n} × ${b} = ${product}, então ${product} ÷ ${divisor} = ${correct}.`,
+        armada: armarDivisao(product, divisor),
       }
     }
   }

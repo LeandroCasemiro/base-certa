@@ -3,6 +3,7 @@
 import { FeedbackState, Question } from '@/lib/types'
 import OptionButton from './OptionButton'
 import ProgressBar from './ProgressBar'
+import ContaArmada from './ContaArmada'
 import { QUESTIONS_PER_ROUND } from '@/lib/constants'
 
 interface GameScreenProps {
@@ -99,6 +100,7 @@ export default function GameScreen({
           <div className="anim-rise mt-5 rounded-xl bg-paper-dark border-2 border-line px-4 py-3">
             <p className="text-xs font-bold uppercase tracking-[0.12em] text-error mb-1">Entenda o erro</p>
             <p className="text-sm text-ink leading-relaxed">{question.explanation}</p>
+            {question.armada && <ContaArmada armada={question.armada} />}
           </div>
         )}
 

@@ -1,3 +1,5 @@
+import type { Armada } from './contaArmada'
+
 export type GameMode =
   | 'basic-add'
   | 'basic-sub'
@@ -40,6 +42,7 @@ export interface Question {
   options: number[]
   correct: number
   explanation: string
+  armada?: Armada | null
 }
 
 export type FeedbackState = 'idle' | 'correct' | 'wrong'
