@@ -17,11 +17,11 @@ interface ResultScreenProps {
 }
 
 function getEncouragementMessage(score: number): string {
-  if (score === QUESTIONS_PER_ROUND) return 'Perfeito! Sem nenhum erro!'
-  if (score >= 8) return 'Muito bem! Você está quase lá!'
-  if (score >= 6) return 'Bom resultado! Continue praticando.'
-  if (score >= 4) return 'Ainda bem que você praticou. Tente de novo!'
-  return 'Não desanima! Cada tentativa é aprendizado.'
+  if (score === QUESTIONS_PER_ROUND) return 'Perfeito. Sem nenhum erro.'
+  if (score >= 8) return 'Muito bem. Você está quase lá.'
+  if (score >= 6) return 'Bom resultado. Continue praticando.'
+  if (score >= 4) return 'Foi um bom treino. Tente de novo.'
+  return 'Não desanima. Cada tentativa é aprendizado.'
 }
 
 export default function ResultScreen({ mode, level, score, onPlayAgain, onHome, titleOverride, variant }: ResultScreenProps) {

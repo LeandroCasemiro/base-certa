@@ -376,7 +376,7 @@ function generateQuestion(mode: GameMode, level: DifficultyLevel): Question {
         text: `${a} × ${b} = ?`,
         correct,
         options: pickOptions(correct, buildMulConfusable(a, b, correct), getSpread(level, correct), confusableCount, false),
-        explanation: `Tabuada do ${a}: ${a} × ${b} = ${correct}. Grave este resultado!`,
+        explanation: `Tabuada do ${a}: ${a} × ${b} = ${correct}. Grave este resultado.`,
       }
     }
     case 'int-add': {
@@ -501,7 +501,7 @@ function generateFocusedTabuadaQuestion(n: number, level: DifficultyLevel, famil
         text: flip ? `${b} × ${n} = ?` : `${n} × ${b} = ?`,
         correct: product,
         options: pickOptions(product, buildMulConfusable(n, b, product), getSpread(level, product), confusableCount, false),
-        explanation: `Tabuada do ${n}: ${n} × ${b} = ${product}. Grave este resultado!`,
+        explanation: `Tabuada do ${n}: ${n} × ${b} = ${product}. Grave este resultado.`,
       }
     }
     case 'div': {
