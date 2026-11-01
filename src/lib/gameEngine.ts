@@ -52,7 +52,13 @@ function sameDigits(correct: number, candidate: number): boolean {
 // Fills up to `needed` distinct wrong-answer values around `correct`, avoiding
 // anything already in `avoid`. Used to top off whatever the confusable pool
 // (plausible-mistake candidates) didn't cover.
-function genericDistractors(correct: number, spread: number, needed: number, avoid: Set<number>): number[] {
+function genericDistractors(
+  correct: number,
+  spread: number,
+  needed: number,
+  avoid: Set<number>,
+  allowNegative: boolean
+): number[] {
   const found = new Set<number>()
   let attempts = 0
 
@@ -60,6 +66,7 @@ function genericDistractors(correct: number, spread: number, needed: number, avo
     attempts++
     const offset = randIntExcluding(-spread, spread, [0])
     const candidate = correct + offset
+    if (!allowNegative && candidate < 0) continue
     if (!avoid.has(candidate) && sameDigits(correct, candidate)) found.add(candidate)
   }
 
@@ -68,6 +75,7 @@ function genericDistractors(correct: number, spread: number, needed: number, avo
     for (const sign of [1, -1]) {
       if (found.size >= needed) break
       const candidate = correct + sign * step
+      if (!allowNegative && candidate < 0) continue
       if (!avoid.has(candidate) && sameDigits(correct, candidate)) found.add(candidate)
     }
     step++
@@ -137,6 +145,9 @@ function pickOptions(
 ): number[] {
   const wrong: number[] = []
   const avoid = new Set<number>([correct])
+  // Fora dos Inteiros, nenhuma alternativa pode ser negativa. Sem isso, o
+  // "correto − 10" da lista de erros parecidos virava −2 quando a resposta era 8.
+  if (!allowNegativeDistractors) confusable = confusable.filter((c) => c >= 0)
 
   // A partir do Desafiador (confusableCount >= 2), as 3 alternativas erradas
   // sempre terminam no mesmo algarismo da unidade da certa — as 4 opções
@@ -188,7 +199,7 @@ function pickOptions(
   }
 
   const remaining = 3 - wrong.length
-  const generic = remaining > 0 ? genericDistractors(correct, spread, remaining, avoid) : []
+  const generic = remaining > 0 ? genericDistractors(correct, spread, remaining, avoid, allowNegativeDistractors) : []
   return shuffleArray([correct, ...wrong, ...generic])
 }
 
@@ -501,7 +512,7 @@ function generateFocusedTabuadaQuestion(n: number, level: DifficultyLevel, famil
         text: flip ? `${b} + ${n} = ?` : `${n} + ${b} = ?`,
         correct: sum,
         options: pickOptions(sum, buildAddConfusable(n, b, sum), getSpread(level, sum), confusableCount, false),
-        explanation: `Isso vem da tabuada do ${n}: ${n} × ${b} = ${product}. Aqui é a soma relacionada: ${n} + ${b} = ${sum}.`,
+        explanation: flip ? `${b} + ${n} = ${sum}.` : `${n} + ${b} = ${sum}.`,
         armada: flip ? armarAdicao(b, n) : armarAdicao(n, b),
       }
     }
@@ -513,7 +524,7 @@ function generateFocusedTabuadaQuestion(n: number, level: DifficultyLevel, famil
         text: `${sum} − ${subtracted} = ?`,
         correct,
         options: pickOptions(correct, buildSubConfusable(sum, subtracted, correct), getSpread(level, correct), confusableCount, false),
-        explanation: `Isso vem da tabuada do ${n}: ${n} × ${b} = ${product}. Aqui é a subtração relacionada: ${sum} − ${subtracted} = ${correct}.`,
+        explanation: `${sum} − ${subtracted} = ${correct}.`,
         armada: armarSubtracao(sum, subtracted),
       }
     }

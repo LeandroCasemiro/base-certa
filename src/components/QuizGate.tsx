@@ -10,7 +10,6 @@ import {
   formatPhone,
   isValidEmail,
   isValidPhone,
-  parentTrainsToo,
   sendToSheet,
 } from '@/lib/quiz'
 import {
@@ -31,17 +30,20 @@ type Step = { kind: 'intro' } | { kind: 'question'; index: number } | { kind: 'c
 
 const TOTAL = QUIZ_QUESTIONS.length
 
-function Screen({ children }: { children: React.ReactNode }) {
+// `center`: em tela alta (computador), o conteúdo fica no meio da altura.
+// Em celular o texto já enche a tela e nada muda. As perguntas não usam,
+// para não pularem de lugar a cada toque.
+function Screen({ children, center = false }: { children: React.ReactNode; center?: boolean }) {
   return (
     <div className="min-h-screen bg-bg flex flex-col items-center px-5 pt-6 pb-4">
-      <div className="w-full max-w-md flex flex-col flex-1">{children}</div>
+      <div className={`w-full max-w-md flex flex-col flex-1 ${center ? 'justify-center' : ''}`}>{children}</div>
     </div>
   )
 }
 
-// Botão principal preso no rodapé da tela: em celular pequeno o texto rola por trás
-// e o botão continua visível.
-const BOTTOM_BAR = 'sticky bottom-0 mt-auto -mx-5 px-5 pt-6 pb-4 bg-gradient-to-t from-bg from-70% to-transparent'
+// Botão principal: fica logo depois do texto; só gruda no rodapé quando o texto é maior que a tela
+// (celular pequeno), para o botão nunca sumir.
+const BOTTOM_BAR = 'sticky bottom-0 mt-2 -mx-5 px-5 pt-6 pb-4 bg-gradient-to-t from-bg from-70% to-transparent'
 
 function PrimaryButton(props: React.ButtonHTMLAttributes<HTMLButtonElement>) {
   const { className = '', disabled, ...rest } = props
@@ -66,11 +68,12 @@ export default function QuizGate({ onUnlock }: QuizGateProps) {
   const [aceite, setAceite] = useState(false)
   const [tried, setTried] = useState(false)
   const [sending, setSending] = useState(false)
+  const [advancing, setAdvancing] = useState(false)
 
   // ---------- Abertura ----------
   if (step.kind === 'intro') {
     return (
-      <Screen>
+      <Screen center>
         <h1 className="text-3xl min-[380px]:text-4xl font-heading font-black text-ink tracking-tight mt-4">Aprenda a Tabuada</h1>
         <p className="text-soft mt-1">O básico da matemática bem feito.</p>
 
@@ -108,8 +111,24 @@ export default function QuizGate({ onUnlock }: QuizGateProps) {
     const selected = answers[q.id]
     const goBack = () =>
       setStep(step.index === 0 ? { kind: 'intro' } : { kind: 'question', index: step.index - 1 })
-    const goNext = () =>
-      setStep(step.index === TOTAL - 1 ? { kind: 'contact' } : { kind: 'question', index: step.index + 1 })
+    // Tocou, avançou: a resposta fica marcada um instante e a próxima pergunta
+    // aparece sozinha. Toque errado se corrige com a seta de voltar.
+    const choose = (opt: string) => {
+      if (advancing) return
+      setAnswers((a) => ({ ...a, [q.id]: opt }))
+      setAdvancing(true)
+      const from = step.index
+      setTimeout(() => {
+        setStep((s) =>
+          s.kind === 'question' && s.index === from
+            ? from === TOTAL - 1
+              ? { kind: 'contact' }
+              : { kind: 'question', index: from + 1 }
+            : s
+        )
+        setAdvancing(false)
+      }, 350)
+    }
 
     return (
       <Screen>
@@ -133,7 +152,7 @@ export default function QuizGate({ onUnlock }: QuizGateProps) {
             {q.options.map((opt) => (
               <button
                 key={opt}
-                onClick={() => setAnswers((a) => ({ ...a, [q.id]: opt }))}
+                onClick={() => choose(opt)}
                 className={`w-full text-left rounded-xl border-2 px-4 py-3.5 text-base transition-all active:scale-[0.99] ${
                   selected === opt
                     ? 'bg-bg-d border-secondary font-semibold text-ink'
@@ -146,11 +165,6 @@ export default function QuizGate({ onUnlock }: QuizGateProps) {
           </div>
         </div>
 
-        <div className={BOTTOM_BAR}>
-          <PrimaryButton onClick={goNext} disabled={!selected}>
-            Continuar →
-          </PrimaryButton>
-        </div>
       </Screen>
     )
   }
@@ -256,7 +270,8 @@ export default function QuizGate({ onUnlock }: QuizGateProps) {
             </label>
           </div>
 
-          <div className={BOTTOM_BAR}>
+          {/* botão logo abaixo do formulário, perto de onde o pai acabou de digitar */}
+          <div className="mt-7 pb-4">
             <PrimaryButton type="submit" disabled={sending}>
               {sending ? 'Enviando...' : 'Ver o resultado →'}
             </PrimaryButton>
@@ -270,8 +285,8 @@ export default function QuizGate({ onUnlock }: QuizGateProps) {
   const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`
 
   return (
-    <Screen>
-      <div className="anim-rise flex flex-col flex-1">
+    <Screen center>
+      <div className="anim-rise flex flex-col">
         <p className="mt-4 text-xs font-bold uppercase tracking-[0.15em] text-muted">Por onde começar</p>
         <div className="mt-3 flex flex-col gap-3">
           {buildStartAdvice(answers).map((t, i) => (
@@ -281,11 +296,14 @@ export default function QuizGate({ onUnlock }: QuizGateProps) {
           ))}
         </div>
 
-        {parentTrainsToo(answers) && (
-          <p className="mt-4 rounded-xl bg-bg-d px-4 py-3 text-base text-ink leading-relaxed">
-            E se a sua tabuada também ficou lá atrás, treina junto. Começa pelo mesmo número que ele.
-          </p>
-        )}
+        {/* Para todo pai: um teste de um segundo para ele saber se sabe a tabuada.
+            Posição do Leandro: o pai precisa saber a tabuada, e o app é dele também. */}
+        <div className="mt-4 rounded-xl bg-bg-d px-4 py-3 text-base text-ink leading-relaxed">
+          <p className="font-semibold">E você, sabe a tabuada de cabeça?</p>
+          <p className="mt-2">Faz o teste agora: quanto é 7 × 8?</p>
+          <p className="mt-2">Se precisou contar nos dedos ou demorou, treina junto com ele.</p>
+          <p className="mt-2">O app é seu também.</p>
+        </div>
 
         <div className="mt-8 flex flex-col gap-3">
           <PrimaryButton onClick={onUnlock}>Abrir o app →</PrimaryButton>
@@ -307,14 +325,14 @@ export default function QuizGate({ onUnlock }: QuizGateProps) {
 
         <div className="mt-10 border-t-2 border-line pt-6">
           <p className="text-xs font-bold uppercase tracking-[0.15em] text-muted">Quem fez este app</p>
-          <p className="mt-3 text-base leading-relaxed text-ink">Além de professor, eu cuido do Pai MOVIDO.</p>
+          <p className="mt-3 text-base leading-relaxed text-ink">Além de professor, eu criei o Pai MOVIDO.</p>
+          {/* Texto da bio do Instagram @euleandrocasemiro, aprovado pelo Leandro em 01/11/2026 */}
           <p className="mt-3 text-base leading-relaxed text-ink">
-            É um trabalho com pais que perceberam que só sustentar e cobrar não basta. Eles querem sair do automático na
-            própria vida. E o filho aprende vendo.
+            É pra pai que trabalha muito e não quer viver no automático.
           </p>
-          <p className="mt-3 text-base leading-relaxed text-ink">
-            Quer saber em que ponto você está? Faça o Diagnóstico MOVIDO. É gratuito e tem 8 perguntas.
-          </p>
+          <p className="mt-3 text-base leading-relaxed text-ink">Muda o que você está fazendo.</p>
+          <p className="mt-3 text-base leading-relaxed text-ink">Descubra como no Diagnóstico MOVIDO.</p>
+          <p className="mt-1 text-base leading-relaxed text-ink">É grátis e leva 3 minutos.</p>
           <div className="mt-4 flex flex-col gap-2">
             <a
               href={DIAGNOSTICO_URL}

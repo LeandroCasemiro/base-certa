@@ -67,14 +67,16 @@ export default function ContaArmada({ armada }: { armada: Armada }) {
           </div>
         )}
       </div>
-      <ol className="mt-3 space-y-1 text-sm text-ink leading-snug">
-        {armada.steps.map((s, i) => (
-          <li key={i} className="flex gap-2">
-            <span className="font-bold">{i + 1}.</span>
-            <span>{s}</span>
-          </li>
-        ))}
-      </ol>
+      {armada.steps.length > 0 && (
+        <ol className="mt-3 space-y-1 text-sm text-ink leading-snug">
+          {armada.steps.map((s, i) => (
+            <li key={i} className="flex gap-2">
+              <span className="font-bold">{i + 1}.</span>
+              <span>{s}</span>
+            </li>
+          ))}
+        </ol>
+      )}
     </div>
   )
 }

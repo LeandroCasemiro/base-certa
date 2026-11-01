@@ -62,3 +62,15 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .anim-pop, .anim-rise { animation: none; }
 }
+
+/* Quebra de linha mais agradável de ler: evita palavra sozinha no fim do
+   parágrafo e equilibra as linhas dos títulos. */
+p,
+li {
+  text-wrap: pretty;
+}
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}

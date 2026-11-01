@@ -20,7 +20,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   {
     id: 'matematica_filho',
     text: 'Como ele está em matemática hoje?',
-    options: ['Vai bem', 'Vai passando, mas sem firmeza', 'Tem dificuldade e sabe disso', 'Tem dificuldade e já desanimou'],
+    options: ['Vai bem', 'Vai passando, mas sem o básico bem construído', 'Tem dificuldade e sabe disso', 'Tem dificuldade e já desanimou'],
   },
   {
     id: 'tabuada_filho',
@@ -65,13 +65,18 @@ export type QuizAnswers = Record<string, string>
 // Monta o "por onde começar" a partir das perguntas 3 (idade), 5 (tabuada) e 10 (tempo).
 // Cada item vira um parágrafo na tela; na planilha, vão juntos numa célula.
 export function buildStartAdvice(a: QuizAnswers): string[] {
-  const start: Record<string, string> = {
-    'Sabe de cabeça': 'Todas as tabuadas, no nível Desafiador, pra manter a tabuada afiada',
-    'Sabe algumas e conta nos dedos nas outras':
-      'a tabuada no nível Iniciante, um número por vez, começando pelos que ele ainda conta nos dedos',
-    'Não sabe e foge dela': 'a tabuada no nível Iniciante, um número por vez, começando pelo 2',
-    'Não sei dizer':
-      'uma rodada de Todas as tabuadas no nível Iniciante, com você do lado, pra ver onde a tabuada está firme e onde não está',
+  // [o começo, o detalhe]: uma frase curta em destaque e o detalhe na linha de baixo
+  const start: Record<string, [string, string]> = {
+    'Sabe de cabeça': ['todas as tabuadas juntas, no nível Desafiador', 'Assim ela continua afiada.'],
+    'Sabe algumas e conta nos dedos nas outras': [
+      'a tabuada no nível Iniciante',
+      'Um número por vez, começando pelos que ele ainda conta nos dedos.',
+    ],
+    'Não sabe e foge dela': ['a tabuada no nível Iniciante', 'Um número por vez, começando pelo 2.'],
+    'Não sei dizer': [
+      'uma rodada com todas as tabuadas juntas, no nível Iniciante',
+      'Fica do lado dele, pra ver quais ele já sabe e quais ainda não.',
+    ],
   }
   const time: Record<string, string> = {
     '5 minutos': 'Cinco minutos por dia já bastam pra começar.',
@@ -80,20 +85,19 @@ export function buildStartAdvice(a: QuizAnswers): string[] {
     'Não sei': 'Uns 10 minutos por dia, sempre no mesmo horário.',
   }
 
+  const [comeco, detalhe] = start[a.tabuada_filho] ?? start['Não sei dizer']
   const parts = [
-    `Pelo que você contou, o melhor começo é ${start[a.tabuada_filho] ?? start['Não sei dizer']}.`,
+    `Pelo que você contou, o melhor começo é ${comeco}.`,
+    detalhe,
     time[a.tempo_pratica] ?? time['Não sei'],
   ]
   if (['11 a 13', '14 a 17', '18 ou mais'].includes(a.idade_filho)) {
-    parts.push('Quando a tabuada estiver firme, vale passar pros Números Inteiros, que aparecem na escola a partir do 7º ano.')
+    parts.push('Quando a tabuada estiver fixa na memória, vale passar pros Números Inteiros.')
+    parts.push('A escola começa a ensinar no 6º ano.')
   }
   return parts
 }
 
-// Para quem marcou dificuldade própria com matemática (pergunta 6)
-export function parentTrainsToo(a: QuizAnswers): boolean {
-  return a.matematica_pai === 'Tinha dificuldade' || a.matematica_pai === 'Até hoje tenho dificuldade'
-}
 
 // ---------- Contato ----------
 

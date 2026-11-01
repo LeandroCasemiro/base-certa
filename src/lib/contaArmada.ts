@@ -2,8 +2,9 @@
 // caderno, mais o passo a passo embaixo (opção B aprovada pelo Leandro em
 // 01/11/2026). O jeito de falar é o dele: "desce o 6, sobe o 5".
 //
-// Só aparece quando ajuda: conta de um algarismo só (7 × 8, 5 + 3) continua
-// só com a frase de hoje.
+// Toda conta é armada, pequena ou grande, para a criança ver sempre o mesmo
+// jeito de montar. Nas somas e subtrações pequenas que passam do 10, o passo a
+// passo ensina a completar o 10 de cabeça (aprovado pelo Leandro em 01/11/2026).
 
 export type CellTone = 'normal' | 'small' | 'struck' | 'zero' | 'result' | 'op'
 
@@ -54,12 +55,34 @@ function vezes(n: number): string {
   return n === 1 ? 'vez' : 'vezes'
 }
 
+// Conta pequena, sem nada para subir ou emprestar no desenho.
+function contaSimples(a: number, b: number, op: string, r: number, cols: number): Row[] {
+  return [numRow(a, cols), numRow(b, cols, op), ruleRow(cols), numRow(r, cols, '', 'result')]
+}
+
+// 7 + 6: o maior completa o 10 com um pedaço do menor.
+function completarDezSoma(a: number, b: number): string[] {
+  const total = a + b
+  if (total <= 10) return [`${a} + ${b} = ${total}`]
+  const big = Math.max(a, b)
+  const small = Math.min(a, b)
+  const need = 10 - big
+  const rest = small - need
+  return [
+    `O ${big} pega ${need} do ${small} e vira 10.`,
+    `${rest === 1 ? 'Sobra' : 'Sobram'} ${rest}. 10 + ${rest} = ${total}`,
+  ]
+}
+
 // ---------------------------------------------------------------- adição
 
 export function armarAdicao(a: number, b: number): Armada | null {
-  if (Math.max(a, b) < 11) return null
+  if (a < 0 || b < 0) return null
   const total = a + b
   const cols = String(total).length
+  if (a < 10 && b < 10) {
+    return { kind: 'vertical', cols, rows: contaSimples(a, b, '+', total, cols), steps: completarDezSoma(a, b) }
+  }
   const da = digitsOf(a).reverse()
   const db = digitsOf(b).reverse()
   const width = Math.max(da.length, db.length)
@@ -95,8 +118,19 @@ export function armarAdicao(a: number, b: number): Armada | null {
 // ------------------------------------------------------------- subtração
 
 export function armarSubtracao(a: number, b: number): Armada | null {
-  if (a < 11 || b < 0 || b > a) return null
+  if (b < 0 || b > a) return null
   const result = a - b
+  if (a > 10 && a < 20 && b < 10 && result < 10) {
+    const cols = String(a).length
+    const down = a - 10
+    const rest = b - down
+    return {
+      kind: 'vertical',
+      cols,
+      rows: contaSimples(a, b, '−', result, cols),
+      steps: [`Tira ${down} do ${a} e chega no 10.`, `Falta tirar ${rest}. 10 − ${rest} = ${result}`],
+    }
+  }
   const da = digitsOf(a).reverse()
   const db = digitsOf(b).reverse()
   const cols = da.length
@@ -159,7 +193,13 @@ export function armarSubtracao(a: number, b: number): Armada | null {
 export function armarMultiplicacao(x: number, y: number): Armada | null {
   const top = Math.max(x, y)
   const bottom = Math.min(x, y)
-  if (top < 11 || bottom < 2) return null
+  if (bottom < 0) return null
+  if (top < 10) {
+    const r = top * bottom
+    const cols = String(r).length
+    // a frase de cima já diz a conta da tabuada; o passo a passo não repete
+    return { kind: 'vertical', cols, rows: contaSimples(top, bottom, '×', r, cols), steps: [] }
+  }
   return bottom < 10 ? multiplicarPorUmAlgarismo(top, bottom) : multiplicarPorVarios(top, bottom)
 }
 
@@ -224,7 +264,6 @@ function multiplicarPorVarios(top: number, bottom: number): Armada {
 export function armarDivisao(dividendo: number, divisor: number): Armada | null {
   if (divisor < 1 || dividendo % divisor !== 0) return null
   const quociente = dividendo / divisor
-  if (quociente < 10 && dividendo < 100) return null
 
   const D = digitsOf(dividendo)
   const cols = D.length
