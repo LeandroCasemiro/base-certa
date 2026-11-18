@@ -1,6 +1,8 @@
 // Quiz de entrada do app Aprenda a Tabuada (antigo Base Certa). Texto aprovado em PLANEJAMENTO/02-QUIZ.txt.
 // Quem responde é o pai (ou a mãe, ou outro responsável). Substitui a antiga senha.
 
+import { NIVEIS_TRAVADOS } from './constants'
+
 export interface QuizQuestion {
   id: string // vira o nome da coluna na planilha
   text: string
@@ -67,7 +69,8 @@ export type QuizAnswers = Record<string, string>
 export function buildStartAdvice(a: QuizAnswers): string[] {
   // [o começo, o detalhe]: uma frase curta em destaque e o detalhe na linha de baixo
   const start: Record<string, [string, string]> = {
-    'Sabe de cabeça': ['todas as tabuadas juntas, no nível Desafiador', 'Assim ela continua afiada.'],
+    // 18/11/2026: era "no nível Desafiador"; o Desafiador ficou com cadeado.
+    'Sabe de cabeça': ['todas as tabuadas juntas, no nível Iniciante, para ganhar velocidade', 'Assim ela continua afiada.'],
     'Sabe algumas e conta nos dedos nas outras': [
       'a tabuada no nível Iniciante',
       'Um número por vez, começando pelos que ele ainda conta nos dedos.',
@@ -91,7 +94,8 @@ export function buildStartAdvice(a: QuizAnswers): string[] {
     detalhe,
     time[a.tempo_pratica] ?? time['Não sei'],
   ]
-  if (['11 a 13', '14 a 17', '18 ou mais'].includes(a.idade_filho)) {
+  // 18/11/2026: frase dos Números Inteiros desligada enquanto eles estão com cadeado.
+  if (!NIVEIS_TRAVADOS && ['11 a 13', '14 a 17', '18 ou mais'].includes(a.idade_filho)) {
     parts.push('Quando a tabuada estiver fixa na memória, vale passar pros Números Inteiros.')
     parts.push('A escola começa a ensinar no 6º ano.')
   }
@@ -165,5 +169,37 @@ export async function sendToSheet(s: QuizSubmission): Promise<void> {
     .then(() => undefined)
     .catch((err) => console.warn('Falha ao enviar o quiz para a planilha:', err))
 
+  await Promise.race([send, timeout])
+}
+
+// ---------- Lista de espera dos níveis com cadeado (18/11/2026) ----------
+// Vai para a mesma planilha do quiz. Com o script novo (06-PLANILHA-SCRIPT.gs),
+// cai na aba "Lista de espera". Com o script antigo, cai na aba "Respostas"
+// com Origem = "lista-espera" (só funciona se o celular vier junto).
+export async function sendWaitlist(w: { nome: string; email: string; celular: string; quis: string }): Promise<void> {
+  const url = process.env.NEXT_PUBLIC_QUIZ_SHEET_URL
+  if (!url) {
+    console.warn('NEXT_PUBLIC_QUIZ_SHEET_URL não configurada: pedido da lista de espera não foi enviado.')
+    return
+  }
+  const body = JSON.stringify({
+    tipo: 'lista',
+    data: new Date().toISOString(),
+    origem: 'lista-espera',
+    nome: w.nome.trim().slice(0, 80),
+    email: w.email.trim().toLowerCase(),
+    celular: onlyDigits(w.celular),
+    quis: w.quis,
+    resultado: `Quer ser avisado: ${w.quis}`,
+  })
+  const timeout = new Promise<void>((resolve) => setTimeout(resolve, 4000))
+  const send = fetch(url, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body,
+  })
+    .then(() => undefined)
+    .catch((err) => console.warn('Falha ao enviar a lista de espera:', err))
   await Promise.race([send, timeout])
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { DifficultyLevel, GameMode } from '@/lib/types'
-import { DIFFICULTY_LEVELS, QUESTIONS_PER_ROUND } from '@/lib/constants'
+import { DIFFICULTY_LEVELS, NIVEIS_TRAVADOS, QUESTIONS_PER_ROUND, isNivelTravado } from '@/lib/constants'
 import { getBestScore } from '@/lib/storage'
 import { getGroupName, getModeName } from '@/lib/labels'
 
@@ -53,19 +53,26 @@ export default function DifficultyScreen({ mode, onSelectLevel, onBack, titleOve
           {DIFFICULTY_LEVELS.map((lvl) => {
             const best = bestScores[lvl.id]
             const isPerfect = best === QUESTIONS_PER_ROUND
+            const travado = isNivelTravado(lvl.id)
 
             return (
               <button
                 key={lvl.id}
                 onClick={() => onSelectLevel(lvl.id)}
-                className="w-full bg-card border-2 border-line rounded-xl px-5 py-5 flex items-center justify-between text-left transition-all hover:border-ink active:scale-[0.98]"
+                className={`w-full bg-card border-2 border-line rounded-xl px-5 py-5 flex items-center justify-between text-left transition-all hover:border-ink active:scale-[0.98] ${
+                  travado ? 'opacity-55' : ''
+                }`}
               >
                 <div className="flex flex-col items-start gap-2">
                   <span className={`text-xs font-bold px-3 py-1 rounded-full ${LEVEL_BADGE[lvl.color]}`}>{lvl.label}</span>
                   <span className="text-sm text-soft">{lvl.description}</span>
                 </div>
                 <div className="text-right shrink-0 ml-3">
-                  {best !== null ? (
+                  {travado ? (
+                    <span className="text-2xl" aria-label="Com cadeado">
+                      🔒
+                    </span>
+                  ) : best !== null ? (
                     <div className="flex flex-col items-end">
                       <span className={`text-lg font-heading font-black ${isPerfect ? 'text-success' : 'text-ink'}`}>
                         {best}/{QUESTIONS_PER_ROUND}
@@ -82,6 +89,9 @@ export default function DifficultyScreen({ mode, onSelectLevel, onBack, titleOve
             )
           })}
         </div>
+        {NIVEIS_TRAVADOS && (
+          <p className="text-center text-sm text-muted -mt-2">Os níveis com cadeado estão chegando.</p>
+        )}
       </div>
     </div>
   )

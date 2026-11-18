@@ -11,6 +11,9 @@ import TabuadaSetupScreen from '@/components/TabuadaSetupScreen'
 import DifficultyScreen from '@/components/DifficultyScreen'
 import GameScreen from '@/components/GameScreen'
 import ResultScreen from '@/components/ResultScreen'
+import LockSheet, { ItemTravado } from '@/components/LockSheet'
+import { DIFFICULTY_LEVELS, isModoTravado, isNivelTravado } from '@/lib/constants'
+import { getModeName } from '@/lib/labels'
 
 type Screen = 'home' | 'tabuada-setup' | 'difficulty' | 'game' | 'result'
 
@@ -24,6 +27,8 @@ export default function Page() {
   const [selectedMode, setSelectedMode] = useState<GameMode | null>(null)
   const [tabuadaConfig, setTabuadaConfig] = useState<TabuadaConfig | null>(null)
   const [unlocked, setUnlockedState] = useState<boolean | null>(null)
+  // Janela do cadeado: o que foi tocado e o texto que vai para a planilha
+  const [travado, setTravado] = useState<{ item: ItemTravado; quis: string } | null>(null)
 
   useEffect(() => {
     setUnlockedState(isUnlocked())
@@ -47,6 +52,10 @@ export default function Page() {
   } = useGameSession()
 
   function handleSelectMode(m: GameMode) {
+    if (isModoTravado(m)) {
+      setTravado({ item: 'inteiros', quis: `Inteiros: ${getModeName(m)}` })
+      return
+    }
     setSelectedMode(m)
     setTabuadaConfig(null)
     setScreen(m === 'tabuada' ? 'tabuada-setup' : 'difficulty')
@@ -58,6 +67,12 @@ export default function Page() {
   }
 
   function handleSelectLevel(l: DifficultyLevel) {
+    if (isNivelTravado(l)) {
+      const nivel = DIFFICULTY_LEVELS.find((d) => d.id === l)?.label ?? l
+      const nome = selectedMode === 'tabuada' ? getTabuadaLabel(tabuadaConfig) ?? 'Tabuada' : getModeName(selectedMode!)
+      setTravado({ item: 'niveis', quis: `${nome} · ${nivel}` })
+      return
+    }
     startGame(selectedMode!, l, selectedMode === 'tabuada' ? tabuadaConfig ?? undefined : undefined)
     setScreen('game')
   }
@@ -106,8 +121,15 @@ export default function Page() {
     )
   }
 
+  const sheet = travado ? <LockSheet item={travado.item} quis={travado.quis} onClose={() => setTravado(null)} /> : null
+
   if (screen === 'home') {
-    return <HomeScreen onSelectMode={handleSelectMode} />
+    return (
+      <>
+        <HomeScreen onSelectMode={handleSelectMode} />
+        {sheet}
+      </>
+    )
   }
 
   if (screen === 'tabuada-setup') {
@@ -116,13 +138,16 @@ export default function Page() {
 
   if (screen === 'difficulty' && selectedMode) {
     return (
-      <DifficultyScreen
-        mode={selectedMode}
-        onSelectLevel={handleSelectLevel}
-        onBack={handleBackFromDifficulty}
-        titleOverride={tabuadaLabel}
-        variant={tabuadaVariant}
-      />
+      <>
+        <DifficultyScreen
+          mode={selectedMode}
+          onSelectLevel={handleSelectLevel}
+          onBack={handleBackFromDifficulty}
+          titleOverride={tabuadaLabel}
+          variant={tabuadaVariant}
+        />
+        {sheet}
+      </>
     )
   }
 

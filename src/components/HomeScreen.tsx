@@ -1,7 +1,7 @@
 'use client'
 
 import { GameMode } from '@/lib/types'
-import { MODE_GROUPS } from '@/lib/constants'
+import { MODE_GROUPS, NIVEIS_TRAVADOS, isModoTravado } from '@/lib/constants'
 
 interface HomeScreenProps {
   onSelectMode: (mode: GameMode) => void
@@ -48,8 +48,13 @@ export default function HomeScreen({ onSelectMode }: HomeScreenProps) {
           <span className="ml-auto text-2xl">→</span>
         </button>
 
-        <h2 className="text-xs font-extrabold uppercase tracking-[0.15em] text-muted mt-7 mb-3 px-1">
+        <h2 className="text-xs font-extrabold uppercase tracking-[0.15em] text-muted mt-7 mb-3 px-1 flex items-center gap-2">
           {basic.label}
+          {NIVEIS_TRAVADOS && (
+            <span className="normal-case tracking-normal text-[11px] font-bold bg-success-bg text-success px-2.5 py-0.5 rounded-full">
+              Iniciante grátis
+            </span>
+          )}
         </h2>
         <div className="grid grid-cols-2 gap-3">
           {basicOps.map((m) => (
@@ -66,15 +71,22 @@ export default function HomeScreen({ onSelectMode }: HomeScreenProps) {
           ))}
         </div>
 
-        <h2 className="text-xs font-extrabold uppercase tracking-[0.15em] text-muted mt-7 mb-3 px-1">
+        <h2 className="text-xs font-extrabold uppercase tracking-[0.15em] text-muted mt-7 mb-3 px-1 flex items-center gap-2">
           {integers.label}
+          {NIVEIS_TRAVADOS && (
+            <span className="normal-case tracking-normal text-[11px] font-bold bg-ink text-bg px-2.5 py-0.5 rounded-full">
+              🔒 em breve
+            </span>
+          )}
         </h2>
         <div className="grid grid-cols-2 gap-3">
           {integers.modes.map((m) => (
             <button
               key={m.id}
               onClick={() => onSelectMode(m.id)}
-              className="bg-card border-2 border-line rounded-xl px-3 py-3 flex items-center gap-3 text-left transition-all hover:border-ink active:scale-[0.97]"
+              className={`bg-card border-2 border-line rounded-xl px-3 py-3 flex items-center gap-3 text-left transition-all hover:border-ink active:scale-[0.97] ${
+                isModoTravado(m.id) ? 'opacity-55' : ''
+              }`}
             >
               <span className={`w-8 h-8 shrink-0 rounded-lg ${opColor(m.id)} text-white grid place-items-center text-lg font-semibold leading-none`}>
                 {m.icon}

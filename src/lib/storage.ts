@@ -65,3 +65,54 @@ export function getBestScore(mode: GameMode, level: DifficultyLevel, variant?: s
   if (history.length === 0) return null
   return Math.max(...history.map((e) => e.score))
 }
+
+// ---- Cadeado dos níveis (18/11/2026) ----
+// O contato do quiz fica guardado no aparelho para o "Quero ser avisado"
+// não pedir o e-mail de novo. Quem fez o quiz antes desta versão não tem
+// o contato guardado: nesse caso a janela do cadeado pede o e-mail.
+const CONTATO_KEY = 'base-certa-contato'
+const LISTA_KEY = 'base-certa-lista-espera'
+
+export interface Contato {
+  nome: string
+  email: string
+  celular: string
+}
+
+export function saveContato(c: Contato): void {
+  try {
+    localStorage.setItem(CONTATO_KEY, JSON.stringify(c))
+  } catch {
+    // silently fail if storage is unavailable
+  }
+}
+
+export function getContato(): Contato | null {
+  try {
+    const raw = localStorage.getItem(CONTATO_KEY)
+    return raw ? (JSON.parse(raw) as Contato) : null
+  } catch {
+    return null
+  }
+}
+
+// O pai já pediu aviso para este item? (ex.: "niveis" ou "inteiros")
+export function isNaLista(item: string): boolean {
+  try {
+    const raw = localStorage.getItem(LISTA_KEY)
+    return raw ? (JSON.parse(raw) as string[]).includes(item) : false
+  } catch {
+    return false
+  }
+}
+
+export function marcarNaLista(item: string): void {
+  try {
+    const raw = localStorage.getItem(LISTA_KEY)
+    const lista = raw ? (JSON.parse(raw) as string[]) : []
+    if (!lista.includes(item)) lista.push(item)
+    localStorage.setItem(LISTA_KEY, JSON.stringify(lista))
+  } catch {
+    // silently fail if storage is unavailable
+  }
+}

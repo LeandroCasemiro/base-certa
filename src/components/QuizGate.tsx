@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import ProgressBar from './ProgressBar'
-import { setUnlocked } from '@/lib/storage'
+import { saveContato, setUnlocked } from '@/lib/storage'
 import {
   QUIZ_QUESTIONS,
   QuizAnswers,
@@ -181,6 +181,7 @@ export default function QuizGate({ onUnlock }: QuizGateProps) {
       if (!nomeOk || !emailOk || !celOk || sending) return
       setSending(true)
       await sendToSheet({ nome, email, celular, aceite, answers, resultado: buildStartAdvice(answers).join(' ') })
+      saveContato({ nome: nome.trim(), email: email.trim().toLowerCase(), celular })
       setUnlocked()
       setSending(false)
       setStep({ kind: 'result' })

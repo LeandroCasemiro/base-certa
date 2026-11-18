@@ -39,6 +39,20 @@ export const DIAGNOSTICO_URL = 'https://www.paimovido.com.br/diagnostico'
 export const INSTAGRAM_URL = 'https://www.instagram.com/euleandrocasemiro/'
 export const PRIVACY_URL = 'https://www.paimovido.com.br/politica-de-privacidade'
 
+// ---- Cadeado dos níveis (decidido em 18/11/2026) ----
+// Grátis: nível Iniciante das Operações Básicas e da Tabuada.
+// Com cadeado ("em breve"): Desafiador e Expert, e Números Inteiros inteiro.
+// Para abrir tudo de novo, trocar para false.
+export const NIVEIS_TRAVADOS = true
+
+export function isModoTravado(mode: string): boolean {
+  return NIVEIS_TRAVADOS && mode.startsWith('int-')
+}
+
+export function isNivelTravado(level: string): boolean {
+  return NIVEIS_TRAVADOS && level !== 'beginner'
+}
+
 export const TABUADA_NUMBERS = Array.from({ length: 12 }, (_, i) => i + 1)
 
 export const DIFFICULTY_LEVELS: DifficultyConfig[] = [
