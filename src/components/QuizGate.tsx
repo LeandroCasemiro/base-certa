@@ -13,8 +13,8 @@ import {
   sendToSheet,
 } from '@/lib/quiz'
 import {
-  DIAGNOSTICO_URL,
   INSTAGRAM_URL,
+  LIVRO_URL,
   PRIVACY_URL,
   WHATSAPP_MESSAGE,
   WHATSAPP_NUMBER,
@@ -327,21 +327,21 @@ export default function QuizGate({ onUnlock }: QuizGateProps) {
         <div className="mt-10 border-t-2 border-line pt-6">
           <p className="text-xs font-bold uppercase tracking-[0.15em] text-muted">Quem fez este app</p>
           <p className="mt-3 text-base leading-relaxed text-ink">Além de professor, eu criei o Pai MOVIDO.</p>
-          {/* Texto da bio do Instagram @euleandrocasemiro, aprovado pelo Leandro em 01/11/2026 */}
+          {/* 18/11/2026: mesmas palavras da bio final de 15/11 (AJUSTE POSICIONAMENTO\08-POSICIONAMENTO-15-11.txt).
+              Antes: "não quer viver no automático" + Diagnóstico MOVIDO. Aprovado pelo Leandro em 18/11. */}
+          <p className="mt-3 text-base leading-relaxed text-ink">Pai que aprende é pai que ensina.</p>
           <p className="mt-3 text-base leading-relaxed text-ink">
-            É pra pai que trabalha muito e não quer viver no automático.
+            Eu ajudo pais a mudar o pensamento por trás das piores decisões, antes que chegue no filho.
           </p>
-          <p className="mt-3 text-base leading-relaxed text-ink">Muda o que você está fazendo.</p>
-          <p className="mt-3 text-base leading-relaxed text-ink">Descubra como no Diagnóstico MOVIDO.</p>
-          <p className="mt-1 text-base leading-relaxed text-ink">É grátis e leva 3 minutos.</p>
+          <p className="mt-3 text-base leading-relaxed text-ink">Comece pelo livro: Protocolo CRE.</p>
           <div className="mt-4 flex flex-col gap-2">
             <a
-              href={DIAGNOSTICO_URL}
+              href={LIVRO_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="w-full h-12 rounded-xl border-2 border-ink grid place-items-center font-bold text-ink hover:bg-paper-dark transition-colors"
             >
-              Fazer o diagnóstico
+              Conhecer o livro
             </a>
             <a
               href={INSTAGRAM_URL}

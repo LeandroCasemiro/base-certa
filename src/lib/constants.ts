@@ -36,6 +36,8 @@ export const WHATSAPP_VIDEO_ENABLED = false
 export const WHATSAPP_MESSAGE = 'Oi Leandro, vim pelo app da tabuada e quero o vídeo.'
 
 export const DIAGNOSTICO_URL = 'https://www.paimovido.com.br/diagnostico'
+// Desde 18/11/2026 o fim do quiz leva ao livro (mesmo link da bio).
+export const LIVRO_URL = 'https://www.paimovido.com.br/protocolo-cre'
 export const INSTAGRAM_URL = 'https://www.instagram.com/euleandrocasemiro/'
 export const PRIVACY_URL = 'https://www.paimovido.com.br/politica-de-privacidade'
 
